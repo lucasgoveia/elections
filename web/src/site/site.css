@@ -272,6 +272,33 @@ li + li {
   line-height: 1.5;
 }
 
+/* The disclaimer: a ruled note, as a scribe would set one apart. */
+.advertencia {
+  margin: 28px 0 8px;
+  padding: 14px 20px 4px;
+  border-top: 3px double var(--tinta);
+  border-bottom: 3px double var(--tinta);
+  max-width: var(--texto);
+}
+
+.advertencia-t {
+  font-family: var(--f-versal);
+  font-size: 19px;
+  letter-spacing: 0.06em;
+  color: var(--sanguinea);
+  margin-bottom: 6px;
+}
+
+.advertencia p {
+  font-size: 18px;
+}
+
+.aviso {
+  font-size: 17px;
+  font-style: italic;
+  color: var(--sepia);
+}
+
 /* A chapter begins with a large initial, as in a manuscript. */
 .capitular::first-letter {
   float: left;

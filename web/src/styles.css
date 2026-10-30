@@ -1847,3 +1847,15 @@ body {
   display: grid;
   gap: 6px;
 }
+
+.sitebar-aviso {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.sitebar-aviso a {
+  color: var(--stamp);
+}

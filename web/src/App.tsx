@@ -71,6 +71,10 @@ function SiteBar() {
           </li>
         </ul>
       </nav>
+      <p className="sitebar-aviso">
+        Simulação de pesquisa. Não é um ataque à urna eletrônica atual nem uma acusação de que ela seja insegura; propõe
+        mudanças para que cada eleitor possa conferir o próprio voto. <a href="./#advertencia">Leia a advertência</a>.
+      </p>
     </header>
   );
 }
