@@ -528,17 +528,25 @@
 
         <div class="brinquedo" id="toy-benaloh">
           <h4>Experimente: a chance de escapar</h4>
-          <p class="instr">Uma urna troca alguns votos. Cada eleitor audita com uma certa chance. Qual a chance de nenhuma troca ser auditada?</p>
+          <p class="instr">
+            Uma urna troca uma parte dos votos que recebe. Cada eleitor audita com uma certa chance. Qual a chance de
+            nenhuma troca ser auditada?
+          </p>
           <div class="grade-2">
             <label class="campo" for="b-k">
               <span>Votos trocados pela urna</span>
-              <input id="b-k" type="range" min="1" max="200" value="20" />
-              <output for="b-k" data-k>20</output>
+              <input id="b-k" type="range" min="1" max="30" value="5" />
+              <output for="b-k" data-k>5%</output>
             </label>
             <label class="campo" for="b-p">
               <span>Eleitores que auditam</span>
               <input id="b-p" type="range" min="1" max="20" value="5" />
               <output for="b-p" data-p>5%</output>
+            </label>
+            <label class="campo" for="b-n">
+              <span>Eleitores nesta urna</span>
+              <input id="b-n" type="range" min="50" max="500" step="10" value="300" />
+              <output for="b-n" data-n>300</output>
             </label>
           </div>
           <p class="saida" data-saida aria-live="polite"></p>

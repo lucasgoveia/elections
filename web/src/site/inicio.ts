@@ -289,27 +289,31 @@ function toyCavernas(root: HTMLElement) {
 // -- IV. the chance of escaping an audit -------------------------------------------
 
 function toyBenaloh(root: HTMLElement) {
-  const k = root.querySelector<HTMLInputElement>('#b-k')!;
+  const share = root.querySelector<HTMLInputElement>('#b-k')!;
   const p = root.querySelector<HTMLInputElement>('#b-p')!;
-  const kOut = root.querySelector<HTMLOutputElement>('[data-k]')!;
+  const n = root.querySelector<HTMLInputElement>('#b-n')!;
+  const shareOut = root.querySelector<HTMLOutputElement>('[data-k]')!;
   const pOut = root.querySelector<HTMLOutputElement>('[data-p]')!;
+  const nOut = root.querySelector<HTMLOutputElement>('[data-n]')!;
   const out = root.querySelector<HTMLElement>('[data-saida]')!;
   const pct = (x: number) =>
     x < 0.0001 ? 'menos de 0,01%' : `${(x * 100).toLocaleString('pt-BR', { maximumFractionDigits: x < 0.01 ? 3 : 1 })}%`;
 
   const render = () => {
-    const kv = Number(k.value);
+    const voters = Number(n.value);
+    // At least one swapped vote, or there is nothing to catch.
+    const k = Math.max(1, Math.round((Number(share.value) / 100) * voters));
     const pv = Number(p.value) / 100;
-    kOut.textContent = String(kv);
+    shareOut.textContent = `${share.value}%`;
     pOut.textContent = `${p.value}%`;
-    const escape = Math.pow(1 - pv, kv);
+    nOut.textContent = String(voters);
+    const escape = Math.pow(1 - pv, k);
     out.innerHTML =
-      `Cada voto trocado escapa com chance ${pct(1 - pv)}. Para os ${kv} escaparem: ` +
-      `(${(1 - pv).toLocaleString('pt-BR')})<sup>${kv}</sup> = <strong>${pct(escape)}</strong>.<br>` +
+      `${share.value}% de ${voters} eleitores são ${k} votos trocados. Cada um escapa com chance ${pct(1 - pv)}; ` +
+      `para os ${k} escaparem: (${(1 - pv).toLocaleString('pt-BR')})<sup>${k}</sup> = <strong>${pct(escape)}</strong>.<br>` +
       `Chance de a urna ser pega: <strong class="${escape < 0.05 ? 'ok' : 'mau'}">${pct(1 - escape)}</strong>.`;
   };
-  k.addEventListener('input', render);
-  p.addEventListener('input', render);
+  for (const input of [share, p, n]) input.addEventListener('input', render);
   render();
 }
 
