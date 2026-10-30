@@ -833,7 +833,7 @@ impl Simulation {
             .cutoff_index()
             .ok_or_else(|| sim_err("the board has no tally_cutoff"))?;
         // The STH root at tally_cutoff is the root of the log up to that entry.
-        let sth_root = self.log.root_at(cutoff + 1);
+        let sth_root = self.log.root_at(cutoff);
         let trustees = Trustees {
             keys: &self.keys,
             zs: &self.trustee_shares,

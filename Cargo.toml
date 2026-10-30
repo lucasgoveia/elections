@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/eg-core", "crates/eg-verify"]
+members = ["crates/eg-core", "crates/eg-verify", "crates/eg-wasm"]
 
 [workspace.package]
 version = "0.1.0"

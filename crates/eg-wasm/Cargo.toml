@@ -1,0 +1,21 @@
+[package]
+name = "eg-wasm"
+description = "WebAssembly bindings for the eg/v1 election simulator and verifier (test UI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+eg-core = { path = "../eg-core", features = ["fixtures"] }
+eg-verify = { path = "../eg-verify" }
+wasm-bindgen = "=0.2.100"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6.5"
+# The browser has no OS RNG syscall; route getrandom through crypto.getRandomValues.
+getrandom = { version = "0.2", features = ["js"] }
+hex.workspace = true

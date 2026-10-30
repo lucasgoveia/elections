@@ -239,6 +239,7 @@ name = "eg-wasm"
 version = "0.1.0"
 dependencies = [
  "eg-core",
+ "eg-verify",
  "getrandom",
  "hex",
  "serde",
