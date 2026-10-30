@@ -309,9 +309,10 @@ function toyBenaloh(root: HTMLElement) {
     nOut.textContent = String(voters);
     const escape = Math.pow(1 - pv, k);
     out.innerHTML =
-      `${share.value}% de ${voters} eleitores são ${k} votos trocados. Cada um escapa com chance ${pct(1 - pv)}; ` +
-      `para os ${k} escaparem: (${(1 - pv).toLocaleString('pt-BR')})<sup>${k}</sup> = <strong>${pct(escape)}</strong>.<br>` +
-      `Chance de a urna ser pega: <strong class="${escape < 0.05 ? 'ok' : 'mau'}">${pct(1 - escape)}</strong>.`;
+      `Chance de a urna ser pega: <strong class="${escape < 0.05 ? 'ok' : 'mau'}">${pct(1 - escape)}</strong>.<br>` +
+      `<span class="conta">A urna troca ${k} dos ${voters} votos. Cada voto trocado tem ${p.value}% de chance de ser ` +
+      `auditado. Para a urna escapar, nenhum dos ${k} pode ser auditado, e a chance disso é ` +
+      `${(1 - pv).toLocaleString('pt-BR')} multiplicado por ele mesmo ${k} vezes: ${pct(escape)}.</span>`;
   };
   for (const input of [share, p, n]) input.addEventListener('input', render);
   render();
