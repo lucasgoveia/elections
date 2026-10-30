@@ -301,69 +301,192 @@
         <div class="capitulo-cab">
           <span class="capitulo-num">III</span>
           <h2 id="cap-3-t">Provar sem mostrar</h2>
-          <p class="pergunta">Como garantir que cada caixa tem um voto só?</p>
+          <p class="pergunta">Como garantir que cada caixa tem um voto só, sem abrir a caixa?</p>
         </div>
 
         <p class="capitular">
           As caixas trancadas trazem um perigo. Se ninguém vê o que tem dentro, uma urna desonesta poderia trancar o
           número 500 numa caixa do Vader. Ao somar, o Vader ganharia 500 votos de uma vez, e ninguém perceberia.
         </p>
+        <p>
+          Então cada caixa precisa vir com uma prova de que guarda 0 ou 1. Parece pedir o impossível: convencer
+          alguém de que a caixa tem 0 ou 1 sem contar qual dos dois. Este capítulo mostra como se faz isso, em três
+          passos. Primeiro, como provar que se conhece um segredo sem contá-lo. Depois, como provar "isto ou aquilo"
+          sem dizer qual. Por fim, como trocar o juiz por uma conta que qualquer um refaz.
+        </p>
+
+        <h3>Primeiro passo: a caverna com porta mágica</h3>
         <aside class="nota">
-          <span class="marcador">Nome técnico</span>
-          Prova de conhecimento zero. A desta caixa é a disjuntiva de Cramer, Damgård e Schoenmakers (1994).
+          <span class="marcador">De onde vem</span>
+          Quisquater e Guillou, "Como explicar provas de conhecimento zero aos seus filhos" (1989).
         </aside>
         <p>
-          Por isso, cada caixa vem acompanhada de uma <em>prova</em> de que guarda 0 ou 1, e de que, somando as
-          caixas de um cargo, o eleitor escolheu exatamente o que podia escolher. A prova não diz se é 0 ou 1. Ela só
-          convence de que é um dos dois.
+          Imagine uma caverna em forma de anel. A entrada fica embaixo, e dela saem dois corredores, o da esquerda e o da
+          direita, que se encontram lá no fundo numa porta de pedra. A porta só abre com uma senha. A urna diz que sabe a
+          senha, e um juiz quer ter certeza sem ouvir a senha.
+        </p>
+        <p>
+          Eles fazem assim. O juiz espera do lado de fora. A urna entra e escolhe um corredor, sem que o juiz veja qual.
+          Então o juiz vai até a entrada e grita: "saia pela esquerda!", ou "pela direita!", ao acaso. Quem sabe a
+          senha sai sempre pelo lado pedido: se estiver no outro corredor, abre a porta e passa. Quem não sabe só
+          acerta se, por sorte, já estava no corredor certo, ou seja, metade das vezes.
+        </p>
+        <p>
+          Uma rodada não prova muito. Vinte rodadas seguidas sem erro, sim: a chance de um impostor acertar vinte vezes
+          por sorte é de uma em um milhão (meio vezes meio, vinte vezes).
+        </p>
+        <p>
+          E o juiz não aprende a senha. Tudo o que ele viu foi a urna saindo pelo lado que ele mesmo pediu. Repare no
+          ponto mais importante: <strong>fingir é fácil quando se conhece a pergunta antes.</strong> Se o impostor
+          soubesse que o juiz ia gritar "esquerda", bastaria entrar pela esquerda. Por isso um vídeo da prova não
+          convence ninguém de fora, porque dá para gravar as rodadas combinando o lado antes. Só convence quem sorteou
+          a pergunta depois que a urna já tinha entrado. A prova vale para o juiz e não carrega nenhum segredo junto.
         </p>
 
         <figure class="tavola desenho" aria-labelledby="tav2-leg">
-          <svg viewBox="0 0 760 210" role="img" aria-label="O amigo daltônico e as duas bolas">
-            <g transform="translate(30 30)">
-              <circle class="t" cx="40" cy="30" r="17" />
-              <path class="t" d="M40 47 L40 120 M40 66 L80 80 M40 66 L74 100 M40 120 L24 160 M40 120 L56 160" />
-              <circle class="s" cx="96" cy="80" r="12" /><circle class="h" cx="96" cy="80" r="12" />
-              <circle class="t" cx="90" cy="106" r="12" />
-              <text class="letra" x="34" y="182">a</text>
+          <svg viewBox="0 0 760 270" role="img" aria-label="Duas cavernas em anel, uma para o 0 e outra para o 1, e o juiz com a moeda">
+            <g transform="translate(150 120)">
+              <path class="h" fill-rule="evenodd" d="M-78 0 a78 78 0 1 0 156 0 a78 78 0 1 0 -156 0 Z M-46 0 a46 46 0 1 0 92 0 a46 46 0 1 0 -92 0 Z" />
+              <circle class="t" r="78" />
+              <circle class="t papel" r="46" />
+              <rect class="papel" x="-13" y="40" width="26" height="62" style="stroke: none" />
+              <path class="t" d="M-13 44 v60 M13 44 v60" />
+              <path class="s" d="M-10 -46 v-32 M10 -46 v-32" style="stroke-width: 3" />
+              <text class="rot" x="-104" y="6">esq.</text>
+              <text class="rot" x="84" y="6">dir.</text>
+              <text class="letra" x="-6" y="-88">b</text>
+              <text class="letra" x="-30" y="128">a</text>
+              <text x="-46" y="150">caverna do 0</text>
             </g>
-            <path class="s tracejado" d="M170 110 C 230 80, 270 80, 320 110" marker-end="url(#seta)" />
-            <text class="rot" x="196" y="72">troca ou não troca?</text>
-            <g transform="translate(330 30)">
-              <circle class="t" cx="40" cy="30" r="17" />
-              <path class="t fino" d="M28 26 h8 M44 26 h8" />
-              <path class="t" d="M40 47 L40 120 M40 66 L10 100 M40 66 L70 100 M40 120 L24 160 M40 120 L56 160" />
-              <text class="letra" x="34" y="182">b</text>
+            <g transform="translate(470 120)">
+              <path class="h" fill-rule="evenodd" d="M-78 0 a78 78 0 1 0 156 0 a78 78 0 1 0 -156 0 Z M-46 0 a46 46 0 1 0 92 0 a46 46 0 1 0 -92 0 Z" />
+              <circle class="t" r="78" />
+              <circle class="t papel" r="46" />
+              <rect class="papel" x="-13" y="40" width="26" height="62" style="stroke: none" />
+              <path class="t" d="M-13 44 v60 M13 44 v60" />
+              <path class="s" d="M-10 -46 v-32 M10 -46 v-32" style="stroke-width: 3" />
+              <text class="rot" x="-104" y="6">esq.</text>
+              <text class="rot" x="84" y="6">dir.</text>
+              <text x="-46" y="150">caverna do 1</text>
             </g>
-            <path class="s tracejado" d="M440 110 C 490 80, 540 80, 580 110" marker-end="url(#seta)" />
-            <g transform="translate(590 40)">
-              <text class="num" x="0" y="20">rodada 1  acertou</text>
-              <text class="num" x="0" y="44">rodada 2  acertou</text>
-              <text class="num" x="0" y="68">rodada 3  acertou</text>
-              <text class="num" x="0" y="92">  ...</text>
-              <text class="num" x="0" y="116">rodada 20 acertou</text>
-              <text class="letra" x="40" y="160">c</text>
+            <!-- the judge with a coin -->
+            <g transform="translate(650 60)">
+              <circle class="t" cx="30" cy="22" r="15" />
+              <path class="t" d="M30 37 v70 M30 54 l-26 24 M30 54 l30 -10 M30 107 l-16 50 M30 107 l16 50" />
+              <circle class="s" cx="66" cy="40" r="9" />
+              <path class="s fino" d="M66 22 v-10 M58 26 l-6 -6 M74 26 l6 -6" />
+              <text class="letra" x="24" y="186">c</text>
             </g>
           </svg>
           <figcaption id="tav2-leg">
-            <b>Tav. II.</b> Uma prova que não ensina nada. <i>a</i> O amigo daltônico segura uma bola vermelha e uma
-            verde, que para ele são iguais, esconde as mãos e troca ou não as bolas. <i>b</i> Você diz se ele trocou. Se
-            as bolas fossem da mesma cor, você acertaria por sorte metade das vezes. <i>c</i> Depois de vinte acertos
-            seguidos, a chance de sorte é de uma em um milhão. Ele se convence de que as cores são diferentes, e continua
-            sem saber qual é a vermelha.
+            <b>Tav. II.</b> As duas cavernas. <i>a</i> Cada caverna tem uma entrada e dois corredores. <i>b</i> No fundo,
+            uma porta que só abre com a senha daquela caverna. A urna só tem a senha da caverna do número que trancou
+            na caixa. <i>c</i> O juiz joga uma moeda depois que a urna já entrou nas duas cavernas.
           </figcaption>
         </figure>
 
+        <h3>Segundo passo: duas cavernas, uma senha</h3>
         <p>
-          As provas das caixas funcionam assim, só que sem conversa: o desafio é tirado de um embaralhamento
-          matemático (uma função de <em>hash</em>) do próprio voto trancado, de modo que a urna não consegue escolher o
-          desafio a seu favor. O resultado é um punhado de números que qualquer computador confere em milésimos de
-          segundo.
+          Agora a ligação com a caixa. Ao trancar o voto, a urna usou um número secreto, uma espécie de senha da
+          caixa. A matemática da tranca tem uma propriedade curiosa: se a caixa guarda 0, esse número abre a porta de
+          uma "caverna do 0"; se guarda 1, abre a de uma "caverna do 1". Uma caixa com 500 tem senha que não abre nenhuma
+          das duas. Provar "a caixa tem 0 ou 1" é, portanto, provar "eu sei a senha de pelo menos uma das duas
+          cavernas", sem dizer de qual.
+        </p>
+        <p>A urna entra nas duas cavernas ao mesmo tempo, e a regra muda assim:</p>
+        <ol>
+          <li>A urna entra num corredor de cada caverna, sem que o juiz veja.</li>
+          <li>O juiz joga uma moeda: dá <strong>iguais</strong> ou <strong>diferentes</strong>.</li>
+          <li>
+            A urna anuncia por que lado vai sair em cada caverna, obedecendo à moeda: se deu "iguais", o mesmo lado nas
+            duas; se deu "diferentes", lados opostos.
+          </li>
+          <li>O juiz confere que ela sai pelo lado anunciado nas duas cavernas.</li>
+        </ol>
+        <p>
+          Veja como a urna honesta, com um 1 na caixa, passa sempre. Ela sabe a senha só da caverna do 1. Então, na
+          caverna do 0, ela entra num corredor qualquer e decide desde já que vai anunciar aquele lado: lá ela sai por
+          onde entrou, sem precisar de senha. Quando a moeda cai, o lado da caverna do 1 fica obrigado pela regra (igual
+          ou oposto ao da caverna do 0). Pode ser que não seja o corredor em que ela está, mas ali ela tem a senha e
+          atravessa a porta.
+        </p>
+        <p>
+          A urna trapaceira, com 500 na caixa, não tem senha nenhuma. Precisa sair, nas duas cavernas, pelo corredor em
+          que já está. Os dois lados ficaram decididos antes da moeda, e eles são iguais ou diferentes. A moeda concorda
+          com isso só metade das vezes. Em vinte rodadas, ela é pega quase com certeza.
+        </p>
+        <p>
+          E o juiz descobre qual caverna era a verdadeira? Não. Ele vê a urna sair pelo lado anunciado nas duas, em
+          toda rodada, seja a caixa 0 ou 1. A caverna "fingida" e a verdadeira deixam rastros idênticos. O truque inteiro
+          está numa liberdade só: <strong>a urna pode escolher uma das respostas antes da moeda, mas não as
+          duas.</strong> Com uma escolhida, ela engana a caverna cuja senha não tem. A outra fica presa à moeda e exige a
+          senha de verdade.
+        </p>
+
+        <div class="brinquedo" id="toy-cavernas">
+          <h4>Experimente: tente passar na prova</h4>
+          <p class="instr">
+            Escolha o que a urna trancou na caixa e rode vinte rodadas. Cada linha mostra o que o juiz vê. Uma urna
+            honesta nunca erra. A trapaceira erra por volta de metade das rodadas.
+          </p>
+          <div class="fila" role="group" aria-label="Conteúdo da caixa">
+            <button type="button" class="botao" data-caixa="0" aria-pressed="false">Caixa com 0</button>
+            <button type="button" class="botao" data-caixa="1" aria-pressed="true">Caixa com 1</button>
+            <button type="button" class="botao" data-caixa="500" aria-pressed="false">Caixa com 500</button>
+            <button type="button" class="botao botao-forte" data-acao="rodar">Rodar 20 rodadas</button>
+          </div>
+          <label class="bastidores" for="cav-bastidores">
+            <input type="checkbox" id="cav-bastidores" /> Mostrar os bastidores (o que o juiz não vê)
+          </label>
+          <ol class="rodadas mono" aria-live="polite"></ol>
+          <p class="saida" data-saida aria-live="polite"></p>
+        </div>
+
+        <h3>Terceiro passo: sem juiz, com um sorteio que ninguém controla</h3>
+        <aside class="nota">
+          <span class="marcador">Nomes técnicos</span>
+          Prova disjuntiva de Cramer, Damgård e Schoenmakers (1994); a troca do juiz pelo hash é a transformação de Fiat
+          e Shamir (1986). As contas estão no <a href="./tecnico.html#t-disj">Técnico, §7</a>.
+        </aside>
+        <p>
+          Numa eleição não dá para ter um juiz jogando moeda para cada caixa de cada eleitor. E, como vimos, uma prova
+          gravada não convence quem não sorteou a pergunta. A saída tem duas partes.
+        </p>
+        <p>
+          <strong>Os lados viram números enormes.</strong> Em vez de esquerda ou direita, a "pergunta" é um número entre
+          zero e um número de 76 algarismos. Acertar por sorte deixa de ser meio e passa a ser uma chance em
+          ≈ 10<sup>75</sup>. Uma rodada basta.
+        </p>
+        <p>
+          <strong>A moeda vem de uma impressão digital.</strong> A urna primeiro escreve, em números, "por onde entrou"
+          em cada caverna. A pergunta é então calculada por uma função de <em>hash</em> aplicada a tudo o que está escrito:
+          a caixa, as entradas nas cavernas, a eleição, a cédula. O hash funciona como um sorteio que todo mundo pode
+          refazer e ninguém consegue prever: mudar uma vírgula na entrada muda a pergunta por completo. Para a urna
+          trapaceira acertar, teria de tentar entradas diferentes até o hash cair do jeito que lhe convém, e isso exige
+          mais tentativas do que todos os computadores do mundo fazem em bilhões de anos.
+        </p>
+        <p>
+          O resultado é um punhado de números anexado a cada caixa. Qualquer pessoa, depois, refaz o hash, confere as
+          duas "saídas" e soma as perguntas, em milésimos de segundo. Ninguém precisa ter estado lá.
+        </p>
+
+        <h3>Um voto por cargo, nem mais nem menos</h3>
+        <p>
+          Falta uma coisa. Cada caixa ter 0 ou 1 não impede a urna de pôr 1 em dois candidatos a presidente. Por isso a
+          urna também prova que a soma das caixas de um cargo é exatamente 1, com o mesmo tipo de caverna: ela conhece a
+          senha da caixa-soma, que é a soma das senhas das caixas. Branco e nulo são caixas como as outras, então
+          também entram na conta. Se cada caixa tem 0 ou 1 e a soma é 1, só sobra uma possibilidade: exatamente uma
+          opção marcada. No senado, com duas vagas, a soma tem de ser 2.
         </p>
         <p>
           O mesmo tipo de prova aparece em todo lugar da apuração. Os guardiões provam que geraram a chave direito.
           Cada guardião prova que usou o seu pedaço verdadeiro ao abrir o total. O embaralhador prova que não trocou
           nenhum voto (capítulo VIII). Uma prova que não confere é rejeitada, e quem a assinou fica exposto.
+        </p>
+        <p>
+          O que nenhuma dessas provas garante é que o 1 está no candidato que <em>você</em> digitou. Uma urna adulterada
+          pode trancar Vader quando você escolheu Luke, com provas perfeitas de que a caixa tem um voto só. Para isso
+          existe o próximo capítulo.
         </p>
       </section>
 
@@ -385,7 +508,7 @@
           tranca o voto e mostra um código na tela. Só então ela pergunta: <em>depositar ou auditar?</em>
         </p>
         <ul>
-          <li><strong>Depositar</strong> (CONFIRMA): o voto vale, a urna apaga o segredo que usou para trancar, e você leva o comprovante com o código.</li>
+          <li><strong>Depositar</strong> (CONFIRMA): o voto vale e a urna apaga o segredo que usou para trancar. Você leva um papel com o código de rastreamento, e só isso: ele não diz em quem você votou, nem serve para provar o voto a ninguém.</li>
           <li>
             <strong>Auditar</strong> (tecla AUDITAR): a urna é obrigada a mostrar o que trancou e o segredo usado. Esse
             voto é descartado, nunca é contado, e você vota de novo. O recibo de auditoria vai para casa com você.
@@ -437,8 +560,9 @@
         </div>
 
         <p class="capitular">
-          O código que você leva no comprovante, algo como <code>K7QD-3XMA-9PRT-2BHW-6YCN</code>, é uma impressão
-          digital da sua caixa trancada. Ele não diz em quem você votou. Serve para você procurar a sua caixa no mural
+          O papel que você leva para casa traz só um código, algo como <code>K7QD-3XMA-9PRT-2BHW-6YCN</code>. Não é um
+          comprovante do voto: não tem nome de candidato, número nem horário. O código é uma impressão digital da sua
+          caixa trancada, e quem o lê não descobre em quem você votou. Serve para você procurar a sua caixa no mural
           e ver que ela está lá, igual.
         </p>
         <p>

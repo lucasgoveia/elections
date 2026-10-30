@@ -832,6 +832,47 @@ figure figcaption b {
   gap: 14px 24px;
 }
 
+/* the rounds of the two-cave game */
+.rodadas {
+  margin: 14px 0 10px;
+  padding-left: 2.6em;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.rodadas li + li {
+  margin-top: 3px;
+}
+
+.rodadas li.falhou {
+  color: var(--sanguinea);
+}
+
+.rodadas .atras {
+  display: none;
+  font-family: var(--f-texto);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--sepia);
+}
+
+.rodadas.com-bastidores .atras {
+  display: block;
+}
+
+.bastidores {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--sepia);
+}
+
+.bastidores input {
+  accent-color: var(--sanguinea);
+}
+
 /* -- problems ------------------------------------------------------------------ */
 
 .problemas {

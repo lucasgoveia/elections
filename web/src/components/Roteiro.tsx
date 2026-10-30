@@ -143,7 +143,7 @@ const PASSOS: Passo[] = [
     titulo: 'Depositar',
     faca: (
       <>
-        Vote de novo e, na tela do código, aperte <b>CONFIRMA</b>. Sai o <b>comprovante</b>. Anote os primeiros grupos do
+        Vote de novo e, na tela do código, aperte <b>CONFIRMA</b>. Sai o <b>comprovante</b>, que traz só o código de rastreamento, sem nenhum candidato. Anote os primeiros grupos do
         código: você vai procurá-lo no mural.
       </>
     ),

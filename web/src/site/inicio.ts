@@ -191,6 +191,101 @@ function toyReta(root: HTMLElement) {
   render();
 }
 
+// -- III. two caves, one password ----------------------------------------------------
+
+type Lado = 'esquerda' | 'direita';
+const outro = (l: Lado): Lado => (l === 'esquerda' ? 'direita' : 'esquerda');
+const sorteiaLado = (): Lado => (randomBelow(2) === 0 ? 'esquerda' : 'direita');
+
+/** One round of the two-cave game: what the judge sees, and what happened behind the scenes. */
+function rodada(caixa: number): { juiz: string; bastidores: string; ok: boolean } {
+  const iguais = randomBelow(2) === 0;
+  const moeda = iguais ? 'iguais' : 'diferentes';
+  const exige = (a: Lado): Lado => (iguais ? a : outro(a));
+
+  if (caixa === 0 || caixa === 1) {
+    // The honest machine fakes the cave whose password it lacks, by fixing its answer before the coin.
+    const fingida = 1 - caixa;
+    const ladoFingida = sorteiaLado();
+    const entrouVerdadeira = sorteiaLado();
+    const ladoVerdadeira = exige(ladoFingida);
+    const lados: Record<number, Lado> = { [fingida]: ladoFingida, [caixa]: ladoVerdadeira };
+    return {
+      ok: true,
+      juiz: `moeda: ${moeda} · caverna do 0 saiu pela ${lados[0]} ✓ · caverna do 1 saiu pela ${lados[1]} ✓`,
+      bastidores:
+        `fingiu a caverna do ${fingida}: entrou pela ${ladoFingida} e decidiu esse lado antes da moeda. ` +
+        (entrouVerdadeira === ladoVerdadeira
+          ? `Na caverna do ${caixa} já estava do lado certo.`
+          : `Na caverna do ${caixa} estava na ${entrouVerdadeira} e usou a senha para atravessar a porta.`),
+    };
+  }
+
+  // The cheater knows no password: both sides were fixed before the coin.
+  const e0 = sorteiaLado();
+  const e1 = sorteiaLado();
+  const pedido1 = exige(e0);
+  const ok = pedido1 === e1;
+  return {
+    ok,
+    juiz: ok
+      ? `moeda: ${moeda} · caverna do 0 saiu pela ${e0} ✓ · caverna do 1 saiu pela ${e1} ✓`
+      : `moeda: ${moeda} · caverna do 0 saiu pela ${e0} ✓ · caverna do 1 anunciou ${pedido1}, ficou presa na ${e1} ✗`,
+    bastidores: `sem senha nenhuma: entrou pela ${e0} e pela ${e1} e torceu para a moeda combinar.`,
+  };
+}
+
+function toyCavernas(root: HTMLElement) {
+  const list = root.querySelector<HTMLOListElement>('.rodadas')!;
+  const out = root.querySelector<HTMLElement>('[data-saida]')!;
+  const back = root.querySelector<HTMLInputElement>('#cav-bastidores')!;
+  const boxes = [...root.querySelectorAll<HTMLButtonElement>('[data-caixa]')];
+  let caixa = 1;
+
+  boxes.forEach((b) =>
+    b.addEventListener('click', () => {
+      caixa = Number(b.dataset.caixa);
+      boxes.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      list.replaceChildren();
+      out.textContent = '';
+    }),
+  );
+
+  const showBack = () => list.classList.toggle('com-bastidores', back.checked);
+  back.addEventListener('change', showBack);
+
+  root.querySelector<HTMLButtonElement>('[data-acao="rodar"]')!.addEventListener('click', () => {
+    const rounds = Array.from({ length: 20 }, () => rodada(caixa));
+    list.replaceChildren(
+      ...rounds.map((r) => {
+        const li = document.createElement('li');
+        li.className = r.ok ? '' : 'falhou';
+        const juiz = document.createElement('span');
+        juiz.textContent = r.juiz;
+        const atras = document.createElement('span');
+        atras.className = 'atras';
+        atras.textContent = r.bastidores;
+        li.append(juiz, atras);
+        return li;
+      }),
+    );
+    showBack();
+    const erros = rounds.filter((r) => !r.ok).length;
+    const primeira = rounds.findIndex((r) => !r.ok) + 1;
+    if (erros === 0 && caixa !== 500) {
+      out.textContent =
+        `Passou nas 20 rodadas. O juiz se convence de que a caixa tem 0 ou 1. Rode com a outra caixa honesta: ` +
+        `as linhas que o juiz vê têm a mesma cara, e nada nelas diz qual caverna era a verdadeira.`;
+    } else if (erros === 0) {
+      out.textContent = 'A trapaceira passou nas 20 rodadas por pura sorte. Isso acontece uma vez em cerca de um milhão.';
+    } else {
+      out.innerHTML =
+        `<strong class="mau">Pega na rodada ${primeira}.</strong> Errou ${erros} de 20 rodadas. ` +
+        `Sem a senha de nenhuma caverna, só passa quando a moeda combina com os dois lados que ela já tinha escolhido.`;
+    }
+  });
+}
+
 // -- IV. the chance of escaping an audit -------------------------------------------
 
 function toyBenaloh(root: HTMLElement) {
@@ -275,6 +370,7 @@ function toyCorrente(root: HTMLElement) {
 const toys: [string, (root: HTMLElement) => void][] = [
   ['toy-somar', toySomar],
   ['toy-reta', toyReta],
+  ['toy-cavernas', toyCavernas],
   ['toy-benaloh', toyBenaloh],
   ['toy-corrente', toyCorrente],
 ];
