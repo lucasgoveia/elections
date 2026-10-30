@@ -5,9 +5,13 @@ pub mod ceremony;
 pub mod dkg;
 pub mod elgamal;
 pub mod error;
+#[cfg(any(test, feature = "fixtures"))]
+pub mod fixtures;
 pub mod group;
 pub mod hash;
+pub mod manifest;
 pub mod proofs;
+pub mod registry;
 pub mod share_enc;
 pub mod sign;
 

@@ -1,7 +1,9 @@
 //! Deterministic CBOR (RFC 8949 §4.2.1) for eg/v1 (SPEC.md §6.1).
 //!
-//! Only unsigned integers, byte strings, text strings, arrays and maps are
-//! supported. Everything else is rejected by the decoder.
+//! Supported items are unsigned integers, byte strings, text strings, arrays,
+//! maps and the booleans `false` and `true` (SPEC.md §7.1 uses `bool` fields).
+//! Everything else, including floats, null and other simple values, is
+//! rejected by the decoder.
 
 use std::cmp::Ordering;
 
@@ -10,6 +12,10 @@ const MAJOR_BYTES: u8 = 2;
 const MAJOR_TEXT: u8 = 3;
 const MAJOR_ARRAY: u8 = 4;
 const MAJOR_MAP: u8 = 5;
+
+/// Encodings of the simple values `false` and `true` (major type 7).
+const SIMPLE_FALSE: u8 = 0xf4;
+const SIMPLE_TRUE: u8 = 0xf5;
 
 /// Maximum number of nested arrays/maps accepted by the decoder.
 const MAX_DEPTH: usize = 64;
@@ -22,6 +28,7 @@ pub enum Value {
     Text(String),
     Array(Vec<Value>),
     Map(Vec<(Value, Value)>), // order as constructed; encoder sorts
+    Bool(bool),
 }
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -86,6 +93,13 @@ impl Value {
         }
     }
 
+    pub fn as_bool(&self) -> Result<bool, CborError> {
+        match self {
+            Value::Bool(b) => Ok(*b),
+            _ => Err(schema("expected boolean")),
+        }
+    }
+
     /// Look up a map entry by uint key.
     pub fn get(&self, key: u64) -> Result<Option<&Value>, CborError> {
         Ok(self
@@ -138,6 +152,12 @@ impl From<Vec<Value>> for Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(b: bool) -> Self {
+        Value::Bool(b)
+    }
+}
+
 /// Encodes a value in deterministic form. Map entries are sorted by the
 /// bytewise order of their encoded keys.
 ///
@@ -169,6 +189,7 @@ pub fn encode_into(v: &Value, out: &mut Vec<u8>) {
                 encode_into(item, out);
             }
         }
+        Value::Bool(b) => out.push(if *b { SIMPLE_TRUE } else { SIMPLE_FALSE }),
         Value::Map(entries) => {
             let mut sorted: Vec<(Vec<u8>, &Value)> =
                 entries.iter().map(|(k, val)| (encode(k), val)).collect();
@@ -296,6 +317,19 @@ impl<'a> Decoder<'a> {
     }
 
     fn item(&mut self, depth: usize) -> Result<Value, CborError> {
+        // The only simple values in the subset are false and true. Every
+        // other major-type-7 item is rejected by `head`.
+        match self.input.get(self.pos) {
+            Some(&SIMPLE_FALSE) => {
+                self.pos += 1;
+                return Ok(Value::Bool(false));
+            }
+            Some(&SIMPLE_TRUE) => {
+                self.pos += 1;
+                return Ok(Value::Bool(true));
+            }
+            _ => {}
+        }
         let (major, arg) = self.head()?;
         match major {
             MAJOR_UINT => Ok(Value::Uint(arg)),
@@ -537,8 +571,39 @@ mod tests {
 
     #[test]
     fn rejects_simple_values() {
-        assert_eq!(decode(&hx("f4")), Err(CborError::Unsupported));
-        assert_eq!(decode(&hx("f6")), Err(CborError::Unsupported));
+        assert_eq!(decode(&hx("f6")), Err(CborError::Unsupported)); // null
+        assert_eq!(decode(&hx("f7")), Err(CborError::Unsupported)); // undefined
+        assert_eq!(decode(&hx("f820")), Err(CborError::Unsupported)); // simple(32)
+        assert_eq!(decode(&hx("f0")), Err(CborError::Unsupported)); // simple(16)
+        assert_eq!(decode(&hx("f9")), Err(CborError::Unsupported)); // half float prefix
+    }
+
+    #[test]
+    fn bool_round_trip() {
+        assert_eq!(enc_hex(&Value::Bool(true)), "f5");
+        assert_eq!(enc_hex(&Value::Bool(false)), "f4");
+        assert_eq!(decode(&hx("f5")), Ok(Value::Bool(true)));
+        assert_eq!(decode(&hx("f4")), Ok(Value::Bool(false)));
+        assert_eq!(Value::from(true), Value::Bool(true));
+        assert_eq!(Value::Bool(true).as_bool(), Ok(true));
+        assert_eq!(Value::Bool(false).as_bool(), Ok(false));
+        assert!(matches!(
+            Value::Uint(1).as_bool(),
+            Err(CborError::Schema(_))
+        ));
+
+        let v = Value::Map(vec![
+            (Value::Uint(0), Value::Bool(true)),
+            (Value::Uint(1), Value::Array(vec![Value::Bool(false)])),
+        ]);
+        assert_eq!(decode(&encode(&v)), Ok(v));
+    }
+
+    #[test]
+    fn bool_map_key_decodes_but_is_not_a_uint_key() {
+        // {true: 1}: the decoder accepts the item; schema helpers reject it.
+        let v = decode(&hx("a1f501")).unwrap();
+        assert_eq!(v.get(1), Ok(None));
     }
 
     #[test]
@@ -604,6 +669,49 @@ pub fn record_fields<'a>(
         return Err(schema("wrong record type tag"));
     }
     Ok(fields)
+}
+
+/// Like [`record_fields`], but keys in `optional` may be absent. Required keys
+/// are `0..n_required` (key 0 is the type tag). Returns one entry per key
+/// `0..=max_key`, where `max_key` is the larger of `n_required - 1` and the
+/// largest optional key; absent optional keys and gaps are `None`. Any other
+/// key is rejected with a schema error.
+///
+/// Panics if `n_required` is 0 (every record has a type tag).
+pub fn record_fields_opt<'a>(
+    v: &'a Value,
+    type_tag: &str,
+    n_required: usize,
+    optional: &[u64],
+) -> Result<Vec<Option<&'a Value>>, CborError> {
+    assert!(n_required >= 1, "a record has at least its type tag");
+    let entries = v.as_map().map_err(|_| schema("record is not a map"))?;
+    let len = optional
+        .iter()
+        .map(|&k| k as usize + 1)
+        .max()
+        .unwrap_or(0)
+        .max(n_required);
+    let mut slots: Vec<Option<&Value>> = vec![None; len];
+    for (k, val) in entries {
+        let Value::Uint(key) = k else {
+            return Err(schema("record key is not a uint"));
+        };
+        let slot = usize::try_from(*key)
+            .ok()
+            .filter(|&i| i < n_required || optional.contains(&(i as u64)))
+            .ok_or_else(|| schema("unknown record key"))?;
+        if slots[slot].replace(val).is_some() {
+            return Err(schema("duplicate record key"));
+        }
+    }
+    if slots[..n_required].iter().any(Option::is_none) {
+        return Err(schema("missing record key"));
+    }
+    if slots[0].and_then(|t| t.as_text().ok()) != Some(type_tag) {
+        return Err(schema("wrong record type tag"));
+    }
+    Ok(slots)
 }
 
 #[cfg(test)]
@@ -677,6 +785,109 @@ mod record_fields_tests {
     fn rejects_non_map() {
         assert!(matches!(
             record_fields(&Value::Uint(0), "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+}
+
+#[cfg(test)]
+mod record_fields_opt_tests {
+    use super::*;
+
+    /// Record "t" with required keys 1 and 2 and the given extra entries.
+    fn record(extra: Vec<(Value, Value)>) -> Value {
+        let mut entries = vec![
+            (Value::Uint(0), Value::from("t")),
+            (Value::Uint(1), Value::Uint(5)),
+            (Value::Uint(2), Value::from(vec![0u8])),
+        ];
+        entries.extend(extra);
+        Value::Map(entries)
+    }
+
+    #[test]
+    fn absent_optional_keys_are_none() {
+        let v = record(vec![]);
+        let f = record_fields_opt(&v, "t", 3, &[3, 5]).unwrap();
+        assert_eq!(f.len(), 6);
+        assert_eq!(f[1], Some(&Value::Uint(5)));
+        assert_eq!(f[2], Some(&Value::from(vec![0u8])));
+        assert_eq!(f[3], None);
+        assert_eq!(f[4], None);
+        assert_eq!(f[5], None);
+    }
+
+    #[test]
+    fn present_optional_keys_are_some() {
+        let v = record(vec![
+            (Value::Uint(3), Value::Bool(true)),
+            (Value::Uint(5), Value::Uint(9)),
+        ]);
+        let f = record_fields_opt(&v, "t", 3, &[3, 5]).unwrap();
+        assert_eq!(f[3], Some(&Value::Bool(true)));
+        assert_eq!(f[4], None);
+        assert_eq!(f[5], Some(&Value::Uint(9)));
+    }
+
+    #[test]
+    fn length_is_at_least_required_count() {
+        let v = record(vec![]);
+        let f = record_fields_opt(&v, "t", 3, &[]).unwrap();
+        assert_eq!(f.len(), 3);
+    }
+
+    #[test]
+    fn rejects_missing_required_key() {
+        let mut v = record(vec![]);
+        if let Value::Map(entries) = &mut v {
+            entries.retain(|(k, _)| *k != Value::Uint(2));
+        }
+        assert!(matches!(
+            record_fields_opt(&v, "t", 3, &[3]),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_unknown_key() {
+        // Key 4 is neither required nor optional.
+        let v = record(vec![(Value::Uint(4), Value::Uint(0))]);
+        assert!(matches!(
+            record_fields_opt(&v, "t", 3, &[3]),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_wrong_tag() {
+        let mut v = record(vec![]);
+        if let Value::Map(entries) = &mut v {
+            entries[0].1 = Value::from("u");
+        }
+        assert!(matches!(
+            record_fields_opt(&v, "t", 3, &[3]),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_duplicate_key() {
+        let v = record(vec![(Value::Uint(1), Value::Uint(6))]);
+        assert!(matches!(
+            record_fields_opt(&v, "t", 3, &[]),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_non_uint_key_and_non_map() {
+        let v = record(vec![(Value::from("x"), Value::Uint(0))]);
+        assert!(matches!(
+            record_fields_opt(&v, "t", 3, &[3]),
+            Err(CborError::Schema(_))
+        ));
+        assert!(matches!(
+            record_fields_opt(&Value::Uint(0), "t", 3, &[3]),
             Err(CborError::Schema(_))
         ));
     }

@@ -23,4 +23,6 @@ pub enum Error {
     ShareDecryption,
     #[error("key ceremony: {0}")]
     Ceremony(String),
+    #[error("manifest: {0}")]
+    Manifest(String),
 }

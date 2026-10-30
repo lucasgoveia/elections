@@ -528,6 +528,7 @@ fn write_json(v: &Value, depth: usize, out: &mut String) {
             out.push('"');
         }
         Value::Text(s) => write_json_string(s, out),
+        Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
         Value::Array(items) => {
             if items.is_empty() {
                 out.push_str("[]");

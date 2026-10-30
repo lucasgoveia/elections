@@ -15,7 +15,11 @@ zeroize.workspace = true
 thiserror.workspace = true
 subtle.workspace = true
 hpke.workspace = true
+rand_chacha = { workspace = true, optional = true }
 
 [dev-dependencies]
 rand_chacha.workspace = true
 hex.workspace = true
+
+[features]
+fixtures = ["dep:rand_chacha"]
