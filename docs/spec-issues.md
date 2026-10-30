@@ -55,3 +55,21 @@ so the spec can be updated to match (or the code changed).
     group is excluded by reservation, the code keeps the reservations already
     made by earlier contests of that group on the same ballot (those α stay
     burned). The spec doesn't say.
+
+13. **§19.1 merged region names.** The order of names in a merged region isn't
+    specified. The code joins the merged group's region names sorted by name
+    (`"A+C"` even when C merged into A).
+
+14. **§19.1 row counts used for merging.** The code counts a ballot toward its
+    region only if all contests of the unit are counted on it (the same rule
+    as the input list).
+
+15. **§15.4/§16.4 unfinished ballot in a recovered journal.** Checkpoints only
+    follow status records, so a recovered journal cut at its last checkpoint
+    never ends inside a ballot. The checker rejects a committed ballot without
+    a status in both modes; the §15.4 "becomes abandoned" rule applies only to
+    a live machine replaying its own journal, which appends `abandoned`.
+
+16. **§20.3 rejected share sets in final BU checks.** `check_final_bu` discards
+    share sets that fail; the verifier reports them separately through
+    `combine`'s `rejected` list.
