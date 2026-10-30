@@ -563,17 +563,6 @@ figure figcaption b {
   margin-top: -1.4em;
 }
 
-.katex {
-  font-size: 1.04em;
-}
-
-.katex-display {
-  margin: 0.9em 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 4px 0;
-}
-
 /* tables of toy numbers */
 .tabela {
   overflow-x: auto;
@@ -606,6 +595,142 @@ figure figcaption b {
 .tabela td.n {
   font-family: var(--f-mono);
   font-size: 15px;
+}
+
+/* -- benches: a piece of the protocol, running ------------------------------- */
+
+.bancada {
+  margin: 26px 0 30px;
+  padding: 16px 20px 14px;
+  border: 1px solid var(--tinta);
+  outline: 1px solid var(--regra);
+  outline-offset: 4px;
+  background: color-mix(in srgb, var(--carta-funda) 60%, transparent);
+}
+
+.bancada > h4 {
+  margin-bottom: 4px;
+}
+
+.bancada .instr {
+  font-size: 16px;
+  color: var(--sepia);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  margin: 10px 0 12px;
+}
+
+.campo-n {
+  display: grid;
+  gap: 2px;
+  font-size: 15px;
+  color: var(--sepia);
+}
+
+.campo-n input[type='number'],
+.campo-n input[type='text'],
+.campo-n select {
+  font: 15px var(--f-mono);
+  color: var(--tinta);
+  background: var(--carta);
+  border: 1px solid var(--regra);
+  border-bottom-color: var(--tinta);
+  padding: 4px 6px;
+}
+
+.campo-n input[type='number'] {
+  width: 4.2em;
+}
+
+.campo-largo {
+  flex: 1 1 16rem;
+}
+
+.campo-largo input[type='text'] {
+  width: 100%;
+}
+
+.campo-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.campo-check input {
+  accent-color: var(--sanguinea);
+}
+
+.passos {
+  margin: 0;
+  padding-left: 2.2em;
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.passos li + li {
+  margin-top: 4px;
+}
+
+.passos li.nota {
+  font-family: var(--f-texto);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--sepia);
+}
+
+.passos li.mau {
+  color: var(--sanguinea);
+}
+
+.passos .exp {
+  color: var(--sepia);
+  font-size: 0.92em;
+}
+
+.marca-ok {
+  color: var(--verdete);
+}
+
+.marca-mau {
+  color: var(--sanguinea);
+}
+
+.passos .mudou {
+  color: var(--sanguinea);
+}
+
+.formula {
+  font-family: var(--f-mono);
+  font-size: 17px;
+  text-align: center;
+  margin: 14px 0 18px;
+}
+
+.f {
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.referencias {
+  font-size: 16px;
+  padding-left: 2.4em;
+}
+
+.referencias li {
+  margin-bottom: 6px;
+}
+
+.referencias li:target {
+  background: color-mix(in srgb, var(--sanguinea) 14%, transparent);
 }
 
 /* -- contents ----------------------------------------------------------------- */
@@ -1109,4 +1234,8 @@ figure figcaption b {
     transition: none !important;
     animation: none !important;
   }
+}
+
+.passos li.ok {
+  color: inherit;
 }
