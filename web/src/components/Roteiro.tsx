@@ -281,7 +281,7 @@ const PASSOS: Passo[] = [
     titulo: 'Sabotar',
     faca: (
       <>
-        Abra <b>Sabotagem</b> no Palco e aperte <b>Nova eleição</b>. Ligue uma sabotagem, como "EA altera o resultado" ou
+        Abra <b>Sabotagem</b> no Palco e aperte <b>Nova eleição</b>. Ligue uma sabotagem, como "Resultado adulterado antes da assinatura" ou
         "Guardião mente na decifragem", rode a eleição (o atalho <b>Rodar eleição completa</b> serve) e veja qual passo
         do verificador a pega.
       </>

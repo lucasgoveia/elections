@@ -664,7 +664,7 @@
           Uma <em>prova de consistência</em> entre cabeças \((n_1, R_1)\) e \((n_2, R_2)\), \(n_1 \le n_2\), mostra com
           \(O(\log n_2)\) hashes que as primeiras \(n_1\) entradas não mudaram. Duas cabeças assinadas que falham na
           consistência, ou duas com o mesmo \(n\) e raízes diferentes, são uma prova assinada de <em>equivocação</em>
-          (§17.4): o mural mostrou histórias diferentes. Os espelhos, mantidos fora do bloco da Justiça Eleitoral (§7.2,
+          (§17.4): o mural mostrou histórias diferentes. Os espelhos, mantidos por instituições de blocos diferentes (§7.2,
           regra 13), trocam cabeças entre si e com os aplicativos dos eleitores, de modo que basta um espelho honesto.
         </p>
       </section>
@@ -831,7 +831,7 @@
         <div class="enunciado">
           <span class="rotulo">Corolário 15.1 (integridade).</span> Sob DL, colisões difíceis de SHA-256, o modelo do oráculo
           aleatório e a infalsificabilidade de Ed25519: se o verificador aceita, o resultado publicado é a contagem correta
-          das cédulas válidas no mural. Nenhum guardião, urna, mural ou Justiça Eleitoral precisa ser honesto para isso.
+          das cédulas válidas no mural. A correção não depende de confiar em nenhuma das partes envolvidas: guardiões, urnas, mural ou autoridade eleitoral.
         </div>
         <p>
           O corolário fala das cédulas <em>no mural</em>. Que elas sejam as que os eleitores escolheram depende ainda da
@@ -891,9 +891,9 @@
           <li>
             <h4>Atestação humana e chaves provisionadas (§28.16 a §28.18)</h4>
             <p>
-              Sem nenhum mesário ou fiscal honesto, uma seção pode inflar o comparecimento até o número de inscritos. Se a
-              Justiça Eleitoral guardasse as chaves das urnas, poderia forjar uma seção inteira; a defesa é gerar as chaves
-              dentro dos aparelhos e as assinaturas de fiscais certificados pelos partidos.
+              Sem nenhum mesário ou fiscal honesto, uma seção pode inflar o comparecimento até o número de inscritos. Se as
+              chaves das urnas fossem geradas fora delas, quem as guardasse poderia forjar uma seção inteira; a defesa é
+              gerar as chaves dentro dos aparelhos e as assinaturas de fiscais certificados pelos partidos.
             </p>
           </li>
           <li>

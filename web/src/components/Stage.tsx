@@ -474,8 +474,8 @@ const ATTACKS: { key: keyof AttacksDto; label: string; does: string; caught: str
   },
   {
     key: 'eaAltersResult',
-    label: 'EA altera o resultado',
-    does: 'A EA soma 100 votos à primeira opção do primeiro cargo antes de assinar o resultado.',
+    label: 'Resultado adulterado antes da assinatura',
+    does: 'Alguém soma 100 votos à primeira opção do primeiro cargo antes de o resultado ser assinado.',
     caught: 'Contagem (passo 13) e Resultado (passo 15): o resultado publicado difere da recontagem.',
   },
   {
