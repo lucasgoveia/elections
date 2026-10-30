@@ -1,6 +1,7 @@
 //! eg/v1 core primitives (SPEC.md §5, §6, §10, §11).
 
 pub mod apportionment;
+pub mod authority;
 pub mod ballot;
 pub mod board;
 pub mod cbor;

@@ -90,3 +90,27 @@ so the spec can be updated to match (or the code changed).
     recovered ballots first (import order), then its own cast ballots (journal
     order), with one reservation set. The verifier must use the same order;
     the spec should state it.
+
+20. **§12.6 nonce reuse reports both contests.** The tally excludes only the
+    later contest that hits a reserved α; the verifier must still report both
+    ballots (and their machine) as evidence of nonce reuse.
+
+21. **§16.5 section with every contest pooled.** Its final BU would need
+    `[+ decryption_share_set]` over zero items, which can't exist. The code
+    builds no final BU for such a section and uses the all-zero digest as
+    `section_result` field 3. The spec should allow an empty final BU or say
+    that field 3 is absent.
+
+22. **§16.4 double import.** If two pre-BUs list the same recovered package,
+    both section tallies cover its ballots and the totals double count. The
+    spec should forbid it (and the verifier report it).
+
+23. **§19.2 mix share sets and their target.** The target digest of a final
+    mix list is the RecordId of the last `mix_output`. The result assembly
+    checks the share proofs against the list's items; the digest binding is
+    checked by the verifier.
+
+24. **§12.4 mixnet slots under a wrong key.** A slot proof shows knowledge of
+    the nonce behind α only, so a machine encrypting under a wrong key passes
+    the proof; the slot decrypts to garbage and is counted invalid (§19.6),
+    not excluded. That's by design, but the invalid count is the only trace.
