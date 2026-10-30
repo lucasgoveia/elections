@@ -73,3 +73,20 @@ so the spec can be updated to match (or the code changed).
 16. **§20.3 rejected share sets in final BU checks.** `check_final_bu` discards
     share sets that fail; the verifier reports them separately through
     `combine`'s `rejected` list.
+
+17. **§16.4 imports aren't journaled.** The journal has no record for importing
+    a recovered package. After a restart the host must re-import before
+    `prepare_pre_bu`, or the pre-BU silently covers fewer ballots (the voter-roll
+    count on paper would expose it). The spec should add an `import` record.
+
+18. **§15.1 torn tail vs a damaged length field.** A damaged length prefix in a
+    middle frame that points past the end looks exactly like a torn final
+    write, so the frames after it are dropped without an error. On a live
+    machine this could silently lose cast ballots. Mitigations: compare both
+    journal media on restart, or add a per-frame length check (e.g. repeat the
+    length after the record).
+
+19. **§12.6 judging order for a section tally.** The machine judges imported
+    recovered ballots first (import order), then its own cast ballots (journal
+    order), with one reservation set. The verifier must use the same order;
+    the spec should state it.

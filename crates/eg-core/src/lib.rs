@@ -15,6 +15,7 @@ pub mod fixtures;
 pub mod group;
 pub mod hash;
 pub mod journal;
+pub mod machine;
 pub mod manifest;
 pub mod mixnet;
 pub mod package;
