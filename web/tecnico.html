@@ -322,8 +322,9 @@
         </div>
         <p>
           Com \(k-1\) guardiões desonestos, as partes deles não dizem nada sobre \(s\) (Proposição 4.2), e o sigilo
-          das cédulas se reduz ao Teorema 3.3. Com \(k\) desonestos, o sigilo acaba, mas a contagem não: uma parte
-          falsa não passa na prova de Chaum-Pedersen. A regra de blocos do manifesto (§7.2, regra 11) proíbe que um
+          das cédulas se reduz ao Teorema 3.3. Com \(k\) desonestos, as cédulas podem ser decifradas uma a uma, mas
+          a contagem continua protegida: uma parte falsa não passa na prova de Chaum-Pedersen. Decifrar não identifica o
+          eleitor; para isso seria preciso também a ordem de votação da seção (seção 16). A regra de blocos do manifesto (§7.2, regra 11) proíbe que um
           bloco detenha \(k\) partes.
         </p>
       </section>
@@ -861,7 +862,11 @@
           </li>
           <li>
             <h4>Conluio de \(k\) guardiões (§2.1)</h4>
-            <p>Quebra o sigilo de todas as cédulas, não a contagem.</p>
+            <p>
+              Permite decifrar cédulas individuais, não alterar a contagem. As cédulas não carregam identidade; ligar
+              uma a um eleitor exige também a ordem de votação na seção (§28.6), o que é viável numa seção visada e não em
+              escala nacional.
+            </p>
           </li>
           <li>
             <h4>Ordem das cédulas (§28.6)</h4>
