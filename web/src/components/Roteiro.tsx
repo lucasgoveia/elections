@@ -86,7 +86,7 @@ const PASSOS: Passo[] = [
     titulo: 'Liberar o eleitor',
     faca: (
       <>
-        Aperte <b>Identificar eleitor e liberar a urna</b>. O mesário confere o documento e libera um voto.
+        Aperte <b>Identificar eleitor e liberar a urna</b>. O mesário confere o documento ou a digital e libera um voto.
       </>
     ),
     porque: (
