@@ -1,6 +1,6 @@
 # eg/v1 implementation walkthrough
 
-This walkthrough explains every piece of the `eg-core` crate. It's written for someone who isn't a cryptographer. For each piece it covers:
+This walkthrough explains every piece of the `eg-core` crate, and then the verifier (`eg-verify`) and the simulator with its browser bindings (`eg-wasm`). It's written for someone who isn't a cryptographer. For each piece it covers:
 
 - what problem the piece solves;
 - which part of `SPEC.md` it implements;
@@ -52,6 +52,9 @@ mixing       22 mixing          mix units, region merging, input lists, the mixe
   │
 machine      23 voting machine  one polling session: encrypt, cast, spoil, restart, pre-BU, package
 pipeline     24 authority       board to result: section tallies, the pool, trustee refusal, seats
+  │
+verifier     25 verifier         the 16 steps of §23, run on the public board alone
+simulator    26 sim and WASM    a whole election in one process, attack switches, browser bindings
 ```
 
 ## Files
@@ -82,10 +85,14 @@ pipeline     24 authority       board to result: section tallies, the pool, trus
 | 22 | [Mixnet orchestration](22-mixnet-orchestration.md) | §19.1, §19.2, §23 step 10 |
 | 23 | [The voting machine: one polling day](23-voting-machine.md) | §13.1, §14.1, §15, §16.1, §16.2, §16.4, §18.1 |
 | 24 | [The authority pipeline: from the board to the result](24-authority-pipeline.md) | §16.2, §16.5, §17.7, §18 to §22 |
+| 25 | [The verifier: checking a board in 16 steps](25-verifier.md) | §23, §2.4 |
+| 26 | [The simulator and the WASM bindings](26-simulation-and-wasm.md) | none directly: drives §8 to §21 and runs §23 |
 
 Files 18 to 22 follow apportionment in the layer order. Each one needs the layers above it: 18 needs ballots (13) and locked boxes (04); 19 needs chains (14) and the tally's imported records (18); 20 needs the tally (18), the shuffle (16) and the seat records (17); 21 needs the journal (19), the manifest (12) and the registry; 22 needs the tally (18) and the shuffle (16).
 
 Files 23 and 24 come last. 23 needs the journal (19), the registry and the packages it produces (21), and the tally's section sums (18). 24 needs the packages (21), the tally (18), the mix plan (22), and decryption and the final BU (20).
+
+File 25 needs the pipeline (24) and every record format below it. It is the check that runs on a board, so it is the place to see the whole protocol at once. File 26 needs everything, and is a demo driver: it plays the election in one process and is never part of a real one.
 
 ## The toy group used throughout
 
