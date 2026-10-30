@@ -6,6 +6,7 @@ pub mod board;
 pub mod cbor;
 pub mod ceremony;
 pub mod chain;
+pub mod decrypt;
 pub mod dkg;
 pub mod elgamal;
 pub mod error;

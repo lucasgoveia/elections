@@ -31,4 +31,8 @@ pub enum Error {
     Board(String),
     #[error("tally: {0}")]
     Tally(String),
+    #[error("journal: {0}")]
+    Journal(String),
+    #[error("decryption: {0}")]
+    Decryption(String),
 }
