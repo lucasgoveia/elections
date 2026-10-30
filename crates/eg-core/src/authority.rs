@@ -521,6 +521,19 @@ pub fn trustee_decrypt<R: RngCore + CryptoRng>(
                     "the section tally is not the one recomputed from the board",
                 ));
             }
+            // §20.5: every imported recovered package must be accepted on the
+            // board, or the tally silently leaves out that machine's votes.
+            for id in t.packages.iter().skip(1) {
+                let accepted = view
+                    .packages
+                    .iter()
+                    .any(|q| q.id == *id && q.recovered && !q.superseded);
+                if !accepted {
+                    return Err(refuse(
+                        "an imported recovered package is not accepted on the board",
+                    ));
+                }
+            }
         }
         Target::Pool(t) => {
             if *t != pool_tally(view, &recomputed) {

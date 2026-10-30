@@ -114,3 +114,11 @@ so the spec can be updated to match (or the code changed).
     the nonce behind α only, so a machine encrypting under a wrong key passes
     the proof; the slot decrypts to garbage and is counted invalid (§19.6),
     not excluded. That's by design, but the invalid count is the only trace.
+
+25. **§16.5/§18.1 election-night opening.** The spec allows opening a section
+    tally before `tally_cutoff`. The reference pipeline builds its board view
+    only at the cutoff, so section tallies open after it.
+
+26. **§15.4 crash after spoil.** Restart reprints a cast slip, but a crash
+    between `spoiled` and printing leaves the voter with no spoil receipt. The
+    spec is silent; reprinting the receipt the same way would close it.
