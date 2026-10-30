@@ -16,6 +16,7 @@ pub mod group;
 pub mod hash;
 pub mod journal;
 pub mod manifest;
+pub mod mixnet;
 pub mod proofs;
 pub mod registry;
 pub mod share_enc;
