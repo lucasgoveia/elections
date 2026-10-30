@@ -24,9 +24,9 @@ pub mod proofs;
 pub mod registry;
 pub mod share_enc;
 pub mod shuffle;
+pub mod sign;
 #[cfg(any(test, feature = "fixtures"))]
 pub mod sim;
-pub mod sign;
 pub mod tally;
 
 pub use error::Error;

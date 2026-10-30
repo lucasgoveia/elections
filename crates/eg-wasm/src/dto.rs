@@ -11,8 +11,8 @@ use eg_core::error::Error;
 use eg_core::manifest::{ContestKind, Manifest, Method, OptionKind};
 use eg_core::registry::Registry;
 use eg_core::sim::{
-    Attacks, CeremonyReport, EntrySummary, LookupView, Phase, PreBuView, ResultView, SlipView,
-    SpoilCheck, SpoilView, ZeresimaView,
+    Attacks, CeremonyReport, EntrySummary, LookupView, Phase, PreBuView, ResultView, Scenario,
+    SlipView, SpoilCheck, SpoilView, ZeresimaView,
 };
 use eg_verify::{Finding, Independence, Party, Report};
 use serde::{Deserialize, Serialize};
@@ -175,18 +175,70 @@ fn write_json_string(s: &str, out: &mut String) {
     out.push('"');
 }
 
+// -- scenarios ---------------------------------------------------------------
+
+/// One selectable election. Wire shape: `{ id, name }`, where `id` is
+/// `Scenario::name()` ("pilot" or "star-wars") and `name` is for display.
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ScenarioDto {
+    pub id: String,
+    pub name: String,
+}
+
+/// The selectable scenarios, in display order.
+pub fn scenarios_dto() -> Vec<ScenarioDto> {
+    let names = [
+        (
+            Scenario::StarWars,
+            "Star Wars: Galactic Republic General Election",
+        ),
+        (
+            Scenario::Pilot,
+            "Brazilian pilot (governor, senate, deputies, mayor)",
+        ),
+    ];
+    names
+        .iter()
+        .map(|(sc, name)| ScenarioDto {
+            id: sc.name().to_owned(),
+            name: (*name).to_owned(),
+        })
+        .collect()
+}
+
 // -- election ----------------------------------------------------------------
 
+/// A machine and the contests it offers. Wire shape: `{ id, contests }`, where
+/// `contests` lists contest indices in ascending order.
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MachineOfferDto {
+    pub id: String,
+    pub contests: Vec<u64>,
+}
+
+/// The election as the UI reads it.
+///
+/// - `scenario`: the scenario identifier, "pilot" or "star-wars".
+/// - `sections[].machines`: machine ids (kept for compatibility).
+/// - `sections[].machineContests`: `[{ id, contests }]`, the same machines with
+///   their offers.
+/// - `reserveMachines`: reserve machine ids (kept for compatibility). Empty in
+///   the Star Wars scenario.
+/// - `reserveMachineContests`: `[{ id, contests }]` for the reserve machines.
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionDto {
     pub id: String,
     pub title: String,
+    pub scenario: String,
     pub contests: Vec<ContestDto>,
     pub parties: Vec<PartyDto>,
     pub trustees: Vec<TrusteeDto>,
     pub sections: Vec<SectionDto>,
     pub reserve_machines: Vec<String>,
+    pub reserve_machine_contests: Vec<MachineOfferDto>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -236,11 +288,18 @@ pub struct SectionDto {
     pub region: String,
     pub eligible: u64,
     pub machines: Vec<String>,
+    /// The machines of the section with their offered contests.
+    pub machine_contests: Vec<MachineOfferDto>,
     pub poll_workers: u64,
 }
 
 impl ElectionDto {
-    pub fn new(manifest: &Manifest, registry: &Registry) -> ElectionDto {
+    /// The election of `manifest` and `registry`, played as `scenario`.
+    pub fn new(manifest: &Manifest, registry: &Registry, scenario: Scenario) -> ElectionDto {
+        let offer = |m: &eg_core::registry::MachineEntry| MachineOfferDto {
+            id: m.machine_id.clone(),
+            contests: m.contests.clone(),
+        };
         let contests = manifest
             .contests
             .iter()
@@ -275,6 +334,7 @@ impl ElectionDto {
         ElectionDto {
             id: manifest.election_id.clone(),
             title: manifest.title.clone(),
+            scenario: scenario.name().to_owned(),
             contests,
             parties: manifest
                 .parties
@@ -308,6 +368,12 @@ impl ElectionDto {
                         .filter(|m| m.section_id == s.section_id)
                         .map(|m| m.machine_id.clone())
                         .collect(),
+                    machine_contests: registry
+                        .machines
+                        .iter()
+                        .filter(|m| m.section_id == s.section_id)
+                        .map(offer)
+                        .collect(),
                     poll_workers: s.poll_worker_keys.len() as u64,
                 })
                 .collect(),
@@ -316,6 +382,12 @@ impl ElectionDto {
                 .iter()
                 .filter(|m| m.section_id.is_empty())
                 .map(|m| m.machine_id.clone())
+                .collect(),
+            reserve_machine_contests: registry
+                .machines
+                .iter()
+                .filter(|m| m.section_id.is_empty())
+                .map(offer)
                 .collect(),
         }
     }

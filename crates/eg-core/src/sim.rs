@@ -57,6 +57,62 @@ const LYING_TRUSTEE: u64 = 3;
 /// pre-BU, and the pooled sums.
 type Sections = Vec<(SectionTally, bool, Vec<ContestSum>)>;
 
+/// The election the simulation plays.
+///
+/// `Pilot` is the Brazilian sample (governor, senate, deputies, mayor). It has
+/// two sections, a reserve machine, a link group and a mixnet contest.
+/// `StarWars` is the Galactic Republic election: ten planet sections, no reserve
+/// machine, no link group and no mixnet contest.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Scenario {
+    Pilot,
+    StarWars,
+}
+
+impl Scenario {
+    /// Every scenario, in display order.
+    pub const ALL: [Scenario; 2] = [Scenario::StarWars, Scenario::Pilot];
+
+    /// The stable identifier: "pilot" or "star-wars".
+    pub fn name(&self) -> &'static str {
+        match self {
+            Scenario::Pilot => "pilot",
+            Scenario::StarWars => "star-wars",
+        }
+    }
+
+    /// The scenario with identifier `s`, if any.
+    pub fn from_name(s: &str) -> Option<Scenario> {
+        Scenario::ALL.into_iter().find(|sc| sc.name() == s)
+    }
+
+    /// The manifest and keys of the scenario.
+    fn fixtures(self, seed: u64) -> (Manifest, Keys) {
+        match self {
+            Scenario::Pilot => fixtures::sample_manifest(seed),
+            Scenario::StarWars => fixtures::starwars_manifest(seed),
+        }
+    }
+
+    /// The registry of the scenario.
+    fn registry(self, manifest: &Manifest, keys: &Keys) -> Registry {
+        match self {
+            Scenario::Pilot => fixtures::sample_registry(manifest, keys),
+            Scenario::StarWars => fixtures::starwars_registry(manifest, keys),
+        }
+    }
+
+    /// Random ballots cast on each regular machine by `run_all`, after the
+    /// spoiled ballot. Kept small for the Star Wars scenario, which has ten
+    /// machines.
+    fn random_ballots_per_machine(self) -> usize {
+        match self {
+            Scenario::Pilot => 3,
+            Scenario::StarWars => 2,
+        }
+    }
+}
+
 /// Phase of the simulated election, in order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Phase {
@@ -252,6 +308,7 @@ struct Pipeline {
 
 /// One election, played step by step.
 pub struct Simulation {
+    scenario: Scenario,
     rng: ChaCha20Rng,
     manifest: &'static Manifest,
     keys: Keys,
@@ -279,16 +336,21 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    /// Samples the manifest, keys and registry from `seed`, and posts the
-    /// signed manifest.
+    /// The pilot election, from `seed`. Same as `with_scenario(seed, Pilot)`.
     pub fn new(seed: u64) -> Simulation {
-        let (manifest, keys) = fixtures::sample_manifest(seed);
+        Simulation::with_scenario(seed, Scenario::Pilot)
+    }
+
+    /// Samples the manifest, keys and registry of `scenario` from `seed`, and
+    /// posts the signed manifest.
+    pub fn with_scenario(seed: u64, scenario: Scenario) -> Simulation {
+        let (manifest, keys) = scenario.fixtures(seed);
         let manifest: &'static Manifest = Box::leak(Box::new(manifest));
-        let registry: &'static Registry =
-            Box::leak(Box::new(fixtures::sample_registry(manifest, &keys)));
+        let registry: &'static Registry = Box::leak(Box::new(scenario.registry(manifest, &keys)));
         let mut log = Log::new();
         log.append(sign_manifest(manifest, &keys.ea));
         Simulation {
+            scenario,
             rng: ChaCha20Rng::seed_from_u64(seed),
             manifest,
             keys,
@@ -307,6 +369,11 @@ impl Simulation {
             phase: Phase::Setup,
             clock: 0,
         }
+    }
+
+    /// The scenario this simulation plays.
+    pub fn scenario(&self) -> Scenario {
+        self.scenario
     }
 
     pub fn manifest(&self) -> &Manifest {
@@ -1029,22 +1096,18 @@ impl Simulation {
     }
 
     /// Runs a full default election. Runs the ceremony, opens the polls, opens
-    /// a session on every regular machine, casts 4 random ballots and 1 spoil on
-    /// each, closes all sessions, cuts off, tallies and signs an STH.
+    /// a session on every regular machine, casts one spoiled and a few random
+    /// ballots on each (see [`Scenario`]), closes all sessions, cuts off, tallies
+    /// and signs an STH.
     pub fn run_all(&mut self) -> Result<ResultView, Error> {
         self.run_ceremony()?;
         self.open_polls()?;
-        let machines: Vec<String> = self
-            .registry
-            .machines
-            .iter()
-            .filter(|m| !m.section_id.is_empty())
-            .map(|m| m.machine_id.clone())
-            .collect();
+        let machines = self.regular_machine_ids();
+        let random = self.scenario.random_ballots_per_machine();
         for machine_id in &machines {
             self.open_session(machine_id, None)?;
             self.vote(machine_id, true)?;
-            self.cast_random(machine_id, 3)?;
+            self.cast_random(machine_id, random)?;
         }
         for machine_id in &machines {
             self.close_session(machine_id)?;
@@ -1113,6 +1176,17 @@ impl Simulation {
     }
 
     // -- internals ---------------------------------------------------------
+
+    /// Ids of the machines that serve a section (not reserve machines), in
+    /// registry order.
+    fn regular_machine_ids(&self) -> Vec<String> {
+        self.registry
+            .machines
+            .iter()
+            .filter(|m| !m.section_id.is_empty())
+            .map(|m| m.machine_id.clone())
+            .collect()
+    }
 
     /// One full vote on a machine. With `spoil_first`, the voter first spoils a
     /// ballot under the same authorization.
@@ -1649,25 +1723,41 @@ mod tests {
         sim.keys.board.verifying_key()
     }
 
+    /// Cast ballots on each regular machine in `run_all`: one spoiled-then-cast
+    /// ballot, then the random ones.
+    fn casts_per_machine(scenario: Scenario) -> u64 {
+        1 + scenario.random_ballots_per_machine() as u64
+    }
+
+    /// Number of regular machines that offer `contest`.
+    fn machines_offering(sim: &Simulation, contest: u64) -> u64 {
+        sim.registry()
+            .machines
+            .iter()
+            .filter(|m| !m.section_id.is_empty() && m.contests.contains(&contest))
+            .count() as u64
+    }
+
     /// Runs the full default election and checks the honest outcome.
-    #[test]
-    fn run_all_without_attacks_tallies_and_verifies() {
-        let mut sim = Simulation::new(7);
+    fn check_honest_run(scenario: Scenario, seed: u64) {
+        let mut sim = Simulation::with_scenario(seed, scenario);
+        assert_eq!(sim.scenario(), scenario);
         let view = sim.run_all().expect("run_all");
         assert_eq!(sim.phase(), Phase::Tallied);
+        assert_eq!(view.contests.len(), sim.manifest().contests.len());
 
-        // Two machines, 4 cast ballots each.
         for c in &view.contests {
-            let votes: u64 = c.options.iter().map(|(_, v)| v).sum();
             let limit = sim.manifest().contest(c.index).expect("contest").limit;
-            assert_eq!(c.counted, 8, "contest {} counted", c.index);
+            let votes: u64 = c.options.iter().map(|(_, v)| v).sum();
+            let expected = casts_per_machine(scenario) * machines_offering(&sim, c.index);
+            assert_eq!(c.counted, expected, "contest {} counted", c.index);
             if limit == 1 {
                 assert_eq!(votes, c.counted, "contest {} votes", c.index);
             } else {
                 assert!(votes <= c.counted * limit, "contest {} votes", c.index);
             }
         }
-        assert_eq!(view.sections.len(), 2);
+        assert_eq!(view.sections.len(), sim.registry().sections.len());
         assert!(view.sections.iter().all(|(_, m)| *m));
 
         let slip = sim.slips()[0].clone();
@@ -1684,103 +1774,159 @@ mod tests {
     }
 
     #[test]
+    fn run_all_without_attacks_tallies_and_verifies() {
+        for scenario in Scenario::ALL {
+            check_honest_run(scenario, 7);
+        }
+    }
+
+    #[test]
+    fn starwars_run_all_has_eleven_contests_and_ten_sections() {
+        let mut sim = Simulation::with_scenario(21, Scenario::StarWars);
+        let view = sim.run_all().expect("run_all");
+        assert_eq!(sim.phase(), Phase::Tallied);
+        assert_eq!(view.contests.len(), 11);
+        assert_eq!(view.sections.len(), 10);
+        assert!(view.sections.iter().all(|(_, m)| *m));
+        assert_eq!(view.contests[0].name, "President of the Galactic Republic");
+        assert_eq!(view.contests[1].name, "Senator \u{2014} Tatooine");
+        // Each planet machine offers the President and its own senate race.
+        assert!(view.contests.iter().all(|c| c.counted > 0));
+        // No mixnet contest, so the board holds no mix records.
+        assert!(sim
+            .entry_summaries()
+            .iter()
+            .all(|s| !s.kind.starts_with("mix")));
+    }
+
+    #[test]
+    fn scenario_names_round_trip() {
+        for scenario in Scenario::ALL {
+            assert_eq!(Scenario::from_name(scenario.name()), Some(scenario));
+        }
+        assert_eq!(Scenario::from_name("pilot"), Some(Scenario::Pilot));
+        assert_eq!(Scenario::from_name("star-wars"), Some(Scenario::StarWars));
+        assert_eq!(Scenario::from_name("Star Wars"), None);
+        assert_eq!(Simulation::new(1).scenario(), Scenario::Pilot);
+    }
+
+    #[test]
     fn machine_that_flips_votes_fails_the_spoil_check() {
-        let mut sim = Simulation::new(8);
-        sim.attacks_mut().machine_flips_votes = true;
-        sim.run_ceremony().expect("ceremony");
-        sim.open_polls().expect("polls");
-        sim.open_session("M-S1-01", None).expect("session");
-        let choices = sim.random_choices("M-S1-01");
-        sim.authorize("M-S1-01").expect("authorize");
-        sim.encrypt("M-S1-01", choices.clone()).expect("encrypt");
-        let spoil = sim.spoil("M-S1-01").expect("spoil");
-        assert_eq!(spoil.claimed, choices);
-        // The spoiled ballot must reach the board, so that the check compares
-        // the receipt with the committed ballot and not with a missing one.
-        sim.close_session("M-S1-01").expect("close");
-        sim.cutoff().expect("cutoff");
-        let check = sim.check_spoil(&spoil.receipt).expect("check");
-        assert!(!check.ok, "the flipped ballot must not verify");
-        assert!(
-            !check.message.starts_with("no committed"),
-            "the check must run against the committed ballot: {}",
-            check.message
-        );
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(8, scenario);
+            sim.attacks_mut().machine_flips_votes = true;
+            sim.run_ceremony().expect("ceremony");
+            sim.open_polls().expect("polls");
+            let machine = sim.regular_machine_ids()[0].clone();
+            sim.open_session(&machine, None).expect("session");
+            let choices = sim.random_choices(&machine);
+            sim.authorize(&machine).expect("authorize");
+            sim.encrypt(&machine, choices.clone()).expect("encrypt");
+            let spoil = sim.spoil(&machine).expect("spoil");
+            assert_eq!(spoil.claimed, choices);
+            // The spoiled ballot must reach the board, so that the check compares
+            // the receipt with the committed ballot and not with a missing one.
+            sim.close_session(&machine).expect("close");
+            sim.cutoff().expect("cutoff");
+            let check = sim.check_spoil(&spoil.receipt).expect("check");
+            assert!(!check.ok, "the flipped ballot must not verify");
+            assert!(
+                !check.message.starts_with("no committed"),
+                "the check must run against the committed ballot: {}",
+                check.message
+            );
+        }
     }
 
     #[test]
     fn ea_alteration_differs_from_the_recount() {
-        let mut sim = Simulation::new(9);
-        sim.attacks_mut().ea_alters_result = true;
-        let view = sim.run_all().expect("run_all");
-        let recount = sim.recount().expect("recount").clone();
-        let published = &view.contests[0];
-        let honest = &recount.contests[0];
-        assert_eq!(published.options[0].1, honest.votes[0] + 100);
-        assert_ne!(
-            published
-                .options
-                .iter()
-                .map(|(_, v)| *v)
-                .collect::<Vec<_>>(),
-            honest.votes
-        );
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(9, scenario);
+            sim.attacks_mut().ea_alters_result = true;
+            let view = sim.run_all().expect("run_all");
+            let recount = sim.recount().expect("recount").clone();
+            let published = &view.contests[0];
+            let honest = &recount.contests[0];
+            assert_eq!(published.options[0].1, honest.votes[0] + 100);
+            assert_ne!(
+                published
+                    .options
+                    .iter()
+                    .map(|(_, v)| *v)
+                    .collect::<Vec<_>>(),
+                honest.votes
+            );
+        }
     }
 
     #[test]
     fn lying_trustee_is_rejected_and_tally_completes() {
-        let mut sim = Simulation::new(10);
-        sim.attacks_mut().trustee_lies = true;
-        let view = sim.run_all().expect("run_all");
-        assert_eq!(sim.phase(), Phase::Tallied);
-        assert!(view.sections.iter().all(|(_, m)| *m));
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(10, scenario);
+            sim.attacks_mut().trustee_lies = true;
+            let view = sim.run_all().expect("run_all");
+            assert_eq!(sim.phase(), Phase::Tallied);
+            assert!(view.sections.iter().all(|(_, m)| *m));
+        }
     }
 
     #[test]
     fn dropped_package_leaves_its_attestation_on_the_board() {
-        let mut sim = Simulation::new(11);
-        sim.attacks_mut().board_drops_package_of = Some("M-S2-01".to_owned());
-        sim.run_all().expect("run_all");
-        let summaries = sim.entry_summaries();
-        let packages: Vec<&EntrySummary> =
-            summaries.iter().filter(|s| s.kind == "package").collect();
-        assert_eq!(packages.len(), 1, "only the S1 package is on the board");
-        assert!(!packages[0].detail.contains("M-S2-01"));
-        assert!(summaries
-            .iter()
-            .any(|s| s.kind == "section_attestation" && s.detail.contains("M-S2-01")));
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(11, scenario);
+            let machines = sim.regular_machine_ids();
+            let dropped = machines[1].clone();
+            sim.attacks_mut().board_drops_package_of = Some(dropped.clone());
+            sim.run_all().expect("run_all");
+            let summaries = sim.entry_summaries();
+            let packages: Vec<&EntrySummary> =
+                summaries.iter().filter(|s| s.kind == "package").collect();
+            assert_eq!(
+                packages.len(),
+                machines.len() - 1,
+                "every package but the dropped one is on the board"
+            );
+            assert!(packages.iter().all(|p| !p.detail.contains(&dropped)));
+            assert!(summaries
+                .iter()
+                .any(|s| s.kind == "section_attestation" && s.detail.contains(&dropped)));
+        }
     }
 
     #[test]
     fn bad_dkg_share_is_complained_about_and_resolved() {
-        let mut sim = Simulation::new(12);
-        sim.attacks_mut().bad_dkg_share = true;
-        let report = sim.run_ceremony().expect("ceremony completes");
-        assert_eq!(report.complaints.len(), 1);
-        assert_eq!(sim.phase(), Phase::CeremonyDone);
-        let kinds: Vec<String> = sim.entry_summaries().into_iter().map(|s| s.kind).collect();
-        assert!(kinds.iter().any(|k| k == "dkg_complaint"));
-        assert!(kinds.iter().any(|k| k == "dkg_reveal"));
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(12, scenario);
+            sim.attacks_mut().bad_dkg_share = true;
+            let report = sim.run_ceremony().expect("ceremony completes");
+            assert_eq!(report.complaints.len(), 1);
+            assert_eq!(sim.phase(), Phase::CeremonyDone);
+            let kinds: Vec<String> = sim.entry_summaries().into_iter().map(|s| s.kind).collect();
+            assert!(kinds.iter().any(|k| k == "dkg_complaint"));
+            assert!(kinds.iter().any(|k| k == "dkg_reveal"));
+        }
     }
 
     #[test]
     fn equivocating_board_is_detected() {
-        let mut sim = Simulation::new(13);
-        sim.attacks_mut().board_equivocates = true;
-        sim.run_ceremony().expect("ceremony");
-        sim.open_polls().expect("polls");
-        let first = sim.sign_sth();
-        assert_eq!(first.len(), 1);
-        let second = sim.sign_sth();
-        assert_eq!(second.len(), 2);
-        let pk = board_pk(&sim);
-        let a = Sth::from_signed(&second[0], &pk).expect("sth");
-        let b = Sth::from_signed(&second[1], &pk).expect("sth");
-        assert_eq!(a.size, b.size);
-        assert_ne!(a.root, b.root);
-        assert_eq!(
-            check_sth_pair(&a, &b, &[]),
-            Some(Equivocation::SameSizeDifferentRoots)
-        );
+        for scenario in Scenario::ALL {
+            let mut sim = Simulation::with_scenario(13, scenario);
+            sim.attacks_mut().board_equivocates = true;
+            sim.run_ceremony().expect("ceremony");
+            sim.open_polls().expect("polls");
+            let first = sim.sign_sth();
+            assert_eq!(first.len(), 1);
+            let second = sim.sign_sth();
+            assert_eq!(second.len(), 2);
+            let pk = board_pk(&sim);
+            let a = Sth::from_signed(&second[0], &pk).expect("sth");
+            let b = Sth::from_signed(&second[1], &pk).expect("sth");
+            assert_eq!(a.size, b.size);
+            assert_ne!(a.root, b.root);
+            assert_eq!(
+                check_sth_pair(&a, &b, &[]),
+                Some(Equivocation::SameSizeDifferentRoots)
+            );
+        }
     }
 }

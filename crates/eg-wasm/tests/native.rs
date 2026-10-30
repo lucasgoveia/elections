@@ -283,3 +283,71 @@ fn verify_board_rejects_bad_hex_and_handles_an_empty_board() {
     assert!(!report.passed);
     assert!(report.result.is_none());
 }
+
+// -- scenarios ----------------------------------------------------------------
+
+use eg_wasm::scenarios_dto;
+
+#[test]
+fn scenarios_list_star_wars_then_pilot() {
+    let ids: Vec<String> = scenarios_dto().into_iter().map(|s| s.id).collect();
+    assert_eq!(ids, ["star-wars", "pilot"]);
+}
+
+#[test]
+fn unknown_scenario_is_an_error_that_lists_the_names() {
+    let err = Sim::with_scenario_dto(1, "dune").err().expect("error");
+    let msg = err.to_string();
+    assert!(msg.contains("pilot") && msg.contains("star-wars"), "{msg}");
+}
+
+#[test]
+fn pilot_election_dto_offers_every_contest_on_each_machine() {
+    let sim = Sim::new(1);
+    let election = sim.election_dto();
+    assert_eq!(election.scenario, "pilot");
+    assert_eq!(sim.scenario_name(), "pilot");
+    for s in &election.sections {
+        assert_eq!(s.machine_contests.len(), 1);
+        assert_eq!(s.machine_contests[0].contests.len(), 6);
+    }
+    assert_eq!(election.reserve_machine_contests.len(), 1);
+    assert_eq!(
+        election.reserve_machine_contests[0].id,
+        election.reserve_machines[0]
+    );
+}
+
+#[test]
+fn starwars_election_dto_has_eleven_contests_and_ten_sections() {
+    let sim = Sim::with_scenario_dto(1, "star-wars").expect("star-wars");
+    assert_eq!(sim.scenario_name(), "star-wars");
+    let election = sim.election_dto();
+    assert_eq!(election.scenario, "star-wars");
+    assert_eq!(election.contests.len(), 11);
+    assert_eq!(election.sections.len(), 10);
+    assert!(election.reserve_machines.is_empty());
+    assert!(election.reserve_machine_contests.is_empty());
+    for s in &election.sections {
+        assert_eq!(s.machines.len(), 1);
+        assert_eq!(s.machine_contests.len(), 1);
+        assert_eq!(s.machine_contests[0].id, s.machines[0]);
+        assert_eq!(s.machine_contests[0].contests.len(), 2);
+    }
+}
+
+#[test]
+fn starwars_run_all_verifies_with_only_the_release_log_warning() {
+    let mut sim = Sim::with_scenario_dto(16, "star-wars").expect("star-wars");
+    sim.run_all_dto().expect("run_all");
+    assert_eq!(sim.phase_name(), "tallied");
+    let report = sim.verify_dto();
+    assert!(report.passed, "{:?}", report.failures);
+    assert!(
+        report.warnings.iter().all(|w| w.section == "§24"),
+        "{:?}",
+        report.warnings
+    );
+    let result = report.result.expect("result");
+    assert_eq!(result.contests.len(), 11);
+}

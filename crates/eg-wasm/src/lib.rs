@@ -6,12 +6,12 @@
 
 mod dto;
 
-pub use dto::{AttacksDto, FindingDto};
+pub use dto::{scenarios_dto, AttacksDto, FindingDto, MachineOfferDto, ScenarioDto};
 
 use eg_core::board::Log;
 use eg_core::cbor;
 use eg_core::manifest::{open_signed_manifest, Manifest};
-use eg_core::sim::{Attacks, Simulation};
+use eg_core::sim::{Attacks, Scenario, Simulation};
 use eg_core::Error;
 use eg_verify::verify;
 use serde::de::DeserializeOwned;
@@ -55,7 +55,31 @@ impl Sim {
     }
 
     pub fn election_dto(&self) -> ElectionDto {
-        ElectionDto::new(self.inner.manifest(), self.inner.registry())
+        ElectionDto::new(
+            self.inner.manifest(),
+            self.inner.registry(),
+            self.inner.scenario(),
+        )
+    }
+
+    /// A simulation of the scenario named `scenario` ("pilot" or "star-wars").
+    pub fn with_scenario_dto(seed: u32, scenario: &str) -> Result<Sim, Error> {
+        let scenario = Scenario::from_name(scenario).ok_or_else(|| {
+            let valid: Vec<&str> = Scenario::ALL.iter().map(Scenario::name).collect();
+            Error::Board(format!(
+                "sim: unknown scenario {scenario:?}, expected one of: {}",
+                valid.join(", ")
+            ))
+        })?;
+        Ok(Sim {
+            inner: Simulation::with_scenario(u64::from(seed), scenario),
+            attacks: Attacks::default(),
+        })
+    }
+
+    /// The identifier of the scenario: "pilot" or "star-wars".
+    pub fn scenario_name(&self) -> &'static str {
+        self.inner.scenario().name()
     }
 
     pub fn run_ceremony_dto(&mut self) -> Result<CeremonyDto, Error> {
@@ -246,6 +270,17 @@ impl Sim {
         }
     }
 
+    /// A simulation of the named scenario: "star-wars" or "pilot". An unknown
+    /// name is an error that lists the valid names.
+    pub fn with_scenario(seed: u32, scenario: &str) -> Result<Sim, JsError> {
+        Sim::with_scenario_dto(seed, scenario).map_err(js_err)
+    }
+
+    /// The identifier of this simulation's scenario: "pilot" or "star-wars".
+    pub fn scenario(&self) -> String {
+        self.scenario_name().to_owned()
+    }
+
     /// "setup" | "ceremony-done" | "polls-open" | "polls-closed" | "tallied"
     pub fn phase(&self) -> String {
         self.phase_name().to_owned()
@@ -385,4 +420,10 @@ pub fn verify_board(entries_hex: JsValue, sths_hex: JsValue) -> Result<JsValue, 
 #[wasm_bindgen]
 pub fn short_code_of(code_hex: &str) -> Result<String, JsError> {
     short_code_of_dto(code_hex).map_err(js_err)
+}
+
+/// The selectable scenarios, as `[{ id, name }]`.
+#[wasm_bindgen]
+pub fn scenarios() -> JsValue {
+    to_js(&scenarios_dto()).unwrap_or(JsValue::NULL)
 }
