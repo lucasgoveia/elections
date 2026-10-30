@@ -1,0 +1,17 @@
+{
+  "name": "eg-wasm",
+  "type": "module",
+  "description": "WebAssembly bindings for the eg/v1 election simulator and verifier (test UI)",
+  "version": "0.1.0",
+  "license": "Apache-2.0 OR MIT",
+  "files": [
+    "eg_wasm_bg.wasm",
+    "eg_wasm.js",
+    "eg_wasm.d.ts"
+  ],
+  "main": "eg_wasm.js",
+  "types": "eg_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
