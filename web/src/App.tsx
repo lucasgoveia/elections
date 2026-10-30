@@ -3,6 +3,7 @@ import { Stage } from './components/Stage';
 import { Workbench } from './components/Workbench';
 import { Printer } from './components/Printer';
 import { Board } from './components/Board';
+import { Roteiro } from './components/Roteiro';
 import { shortHash } from './format';
 
 const PHASES = ['Cerimônia de chaves', 'Abertura', 'Votação', 'Encerramento', 'Apuração', 'Verificação'];
@@ -21,9 +22,7 @@ function Rail() {
   const cur = CURRENT[snap.phase];
   return (
     <header className="rail">
-      <div className="brand">
-        <span className="mono">eg/v1</span> Urna Lab
-      </div>
+      <div className="brand">Oficina</div>
       <ol className="rail-phases" aria-label="Etapa da eleição">
         {PHASES.map((label, i) => (
           <li
@@ -50,6 +49,32 @@ function Rail() {
   );
 }
 
+/** The site's running head, shared in look with Início and Técnico. */
+function SiteBar() {
+  return (
+    <header className="sitebar">
+      <a className="sitebar-marca" href="./">
+        Urna <span>à</span> Prova
+      </a>
+      <nav aria-label="Páginas">
+        <ul className="sitebar-paginas">
+          <li>
+            <a href="./">Início</a>
+          </li>
+          <li>
+            <a href="./tecnico.html">Técnico</a>
+          </li>
+          <li>
+            <a href="./oficina.html" aria-current="page">
+              Oficina
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+  );
+}
+
 function Toast() {
   const { toast, dismissToast } = useSim();
   if (!toast) return null;
@@ -66,7 +91,9 @@ function Toast() {
 export function App() {
   return (
     <div className="app">
+      <SiteBar />
       <Rail />
+      <Roteiro />
       <div className="columns">
         <Stage />
         <Workbench />

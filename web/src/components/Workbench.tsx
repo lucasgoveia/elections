@@ -478,6 +478,9 @@ function LookupBox() {
   );
 }
 
+/** The ballot statuses of §13.1, as a voter reads them. */
+const STATUS_PT: Record<string, string> = { cast: 'depositada', spoiled: 'auditada', abandoned: 'abandonada' };
+
 function LookupResult({ look }: { look: LookupDto }) {
   const { snap } = useSim();
   if (!look.found) {
@@ -492,7 +495,7 @@ function LookupResult({ look }: { look: LookupDto }) {
     <div className="lookup-result" role="status">
       <p>
         Encontrado na entrada <strong>#{look.entryIndex}</strong> do mural, na urna {look.machineId}. Situação:{' '}
-        <strong>{look.status}</strong>.
+        <strong>{(look.status && STATUS_PT[look.status]) ?? look.status}</strong>.
       </p>
       <p className={look.inclusionProofVerifies ? 'check-ok' : 'check-fail'}>
         {look.inclusionProofVerifies

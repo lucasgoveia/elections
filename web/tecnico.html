@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Urna à Prova · Técnico</title>
+    <meta
+      name="description"
+      content="A matemática da urna verificável eg/v1: ElGamal exponencial, compartilhamento de segredo, provas de conhecimento zero, Benaloh, árvores de Merkle e mixnet, com exemplos numéricos e provas."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Courier+Prime:wght@400;700&display=swap"
+    />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <pattern id="hachura" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <line x1="0" y1="0" x2="0" y2="5" style="stroke: var(--hachura)" stroke-width="1.1" />
+        </pattern>
+        <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M1 1 L9 5 L1 9" fill="none" style="stroke: var(--sanguinea)" stroke-width="1.6" stroke-linecap="round" />
+        </marker>
+      </defs>
+    </svg>
+
+    <header class="cabeca">
+      <div class="cabeca-dentro">
+        <a class="marca" href="./">Urna <span>à</span> Prova</a>
+        <nav aria-label="Páginas">
+          <ul class="paginas">
+            <li><a href="./">Início</a></li>
+            <li><a href="./tecnico.html" aria-current="page">Técnico</a></li>
+            <li><a href="./oficina.html">Oficina</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="folio">
+      <section class="abertura">
+        <span class="sobrescrito">Tratado técnico</span>
+        <h1>Por que a urna funciona</h1>
+        <p class="lede">
+          Cada peça do protocolo eg/v1, com a definição, uma conta feita à mão com números pequenos e a prova de que
+          ela cumpre o que promete. Os parágrafos marcados com § remetem à especificação.
+        </p>
+        <p>
+          Os pré-requisitos são aritmética modular e um pouco de álgebra. As provas de segurança são as clássicas da
+          literatura, em versão enxuta. Elas valem no modelo do oráculo aleatório para as funções de hash e sob as
+          hipóteses de dificuldade do §2.2. A página <a href="./">Início</a> conta a mesma história sem fórmulas.
+        </p>
+      </section>
+
+      <ol class="sumario">
+        <li><span class="n">1</span><a href="#t-grupo">O grupo e a notação</a></li>
+        <li><span class="n">2</span><a href="#t-hash">Hashes e separação de domínio</a></li>
+        <li><span class="n">3</span><a href="#t-elgamal">ElGamal exponencial</a></li>
+        <li><span class="n">4</span><a href="#t-shamir">Chave repartida e decifração por limiar</a></li>
+        <li><span class="n">5</span><a href="#t-schnorr">Protocolos sigma e Fiat-Shamir</a></li>
+        <li><span class="n">6</span><a href="#t-cp">Chaum-Pedersen</a></li>
+        <li><span class="n">7</span><a href="#t-disj">A prova de 0 ou 1</a></li>
+        <li><span class="n">8</span><a href="#t-cedula">A cédula inteira</a></li>
+        <li><span class="n">9</span><a href="#t-codigo">Códigos e a corrente da urna</a></li>
+        <li><span class="n">10</span><a href="#t-benaloh">Auditoria de Benaloh</a></li>
+        <li><span class="n">11</span><a href="#t-mural">O mural como árvore de Merkle</a></li>
+        <li><span class="n">12</span><a href="#t-apuracao">Apuração por seção e boletins</a></li>
+        <li><span class="n">13</span><a href="#t-mixnet">Embaralhamento verificável</a></li>
+        <li><span class="n">14</span><a href="#t-resultado">Do total ao eleito</a></li>
+        <li><span class="n">15</span><a href="#t-verificador">O verificador</a></li>
+        <li><span class="n">16</span><a href="#limites">Limites e questões em aberto</a></li>
+      </ol>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-grupo" aria-labelledby="t-grupo-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">1</span>
+          <h2 id="t-grupo-h">O grupo e a notação</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§5.1</span>Ristretto255, RFC 9496, sobre a curva 25519.</aside>
+        <p>
+          Toda a criptografia acontece num grupo cíclico \(\mathbb{G}\) de ordem prima
+          \(\ell = 2^{252} + 27742317777372353535851937790883648493\), com gerador \(B\) e identidade \(O\). Os
+          <em>escalares</em> são inteiros módulo \(\ell\) (letras minúsculas: \(r, s, u\)); os <em>elementos</em> são
+          pontos (maiúsculas: \(A, K, M\)). A operação é escrita como soma: \(A + C\), e \(x\cdot A\) é \(A\) somado
+          \(x\) vezes.
+        </p>
+        <p>Duas hipóteses sustentam tudo (§2.2):</p>
+        <ul>
+          <li>
+            <strong>Logaritmo discreto (DL).</strong> Dado \(X = x\cdot B\) com \(x\) uniforme, encontrar \(x\) é
+            inviável. Daí vêm a solidez das provas e a impossibilidade de forjar.
+          </li>
+          <li>
+            <strong>Diffie-Hellman decisional (DDH).</strong> As triplas \((a\cdot B,\, b\cdot B,\, ab\cdot B)\) e
+            \((a\cdot B,\, b\cdot B,\, c\cdot B)\), com \(a, b, c\) uniformes, são indistinguíveis. Daí vem o sigilo.
+          </li>
+        </ul>
+        <p>
+          Como \(\ell\) é primo, todo elemento diferente de \(O\) gera o grupo e todo escalar não nulo tem inverso.
+          Não há subgrupos pequenos, e a decodificação canônica do Ristretto rejeita pontos inválidos (§28.9).
+        </p>
+
+        <div class="exemplo">
+          <span class="rotulo">O grupo de brinquedo</span>
+          <p>
+            Para fazer contas à mão, usamos os elementos \(\{1, 2, 4, 8, 16, 9, 18, 13, 3, 6, 12\}\) gerados por
+            \(g = 2\) módulo \(p = 23\). São \(11\) elementos, então os escalares vivem módulo \(\ell = 11\). Este
+            grupo é escrito com multiplicação; o dicionário para a notação da especificação é
+          </p>
+          \[ x\cdot B \;\mapsto\; g^{x} \bmod 23, \qquad A + C \;\mapsto\; A\cdot C \bmod 23, \qquad -A \;\mapsto\; A^{-1} \bmod 23. \]
+          <div class="tabela">
+            <table>
+              <thead>
+                <tr><th>\(x\)</th><td class="n">0</td><td class="n">1</td><td class="n">2</td><td class="n">3</td><td class="n">4</td><td class="n">5</td><td class="n">6</td><td class="n">7</td><td class="n">8</td><td class="n">9</td><td class="n">10</td></tr>
+              </thead>
+              <tbody>
+                <tr><th>\(g^x\)</th><td class="n">1</td><td class="n">2</td><td class="n">4</td><td class="n">8</td><td class="n">16</td><td class="n">9</td><td class="n">18</td><td class="n">13</td><td class="n">3</td><td class="n">6</td><td class="n">12</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Com a tabela, todo produto vira soma de expoentes módulo 11: \(16\cdot 13 = g^{4}g^{7} = g^{11} = 1\). Um
+            grupo deste tamanho não esconde nada, porque a tabela inteira cabe numa linha. Ele serve só para conferir
+            as contas.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-hash" aria-labelledby="t-hash-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">2</span>
+          <h2 id="t-hash-h">Hashes e separação de domínio</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§5.3, §6</span>CBOR determinístico, RFC 8949 §4.2.1.</aside>
+        <p>
+          Toda entrada de hash é um vetor CBOR determinístico cujo primeiro item é uma etiqueta que começa com
+          <code>eg/v1/</code>. Há duas funções:
+        </p>
+        \[ \mathsf{D}(\tau, x_1, \dots, x_n) = \mathrm{SHA256}\big(\mathrm{CBOR}[\tau, x_1, \dots, x_n]\big), \qquad
+           \mathcal{H}(\tau, x_1, \dots, x_n) = \mathrm{SHA512}\big(\mathrm{CBOR}[\tau, x_1, \dots, x_n]\big) \bmod \ell. \]
+        <p>
+          \(\mathsf{D}\) dá impressões digitais de 32 bytes; \(\mathcal{H}\) dá desafios escalares. Os 64 bytes do
+          SHA-512 reduzidos módulo \(\ell \approx 2^{252}\) têm distância estatística de uniforme menor que
+          \(2^{-259}\), por isso a redução é "larga".
+        </p>
+        <p>
+          A codificação é injetiva: dois vetores diferentes nunca têm os mesmos bytes, porque o CBOR determinístico
+          prefixa cada item com tipo e comprimento. Sem isso, \(\mathsf{D}(\tau, \texttt{"ab"}, \texttt{"c"})\) e
+          \(\mathsf{D}(\tau, \texttt{"a"}, \texttt{"bc"})\) poderiam coincidir. A etiqueta garante que um hash calculado
+          para um fim nunca valha para outro: um desafio de prova de seleção não serve como código de rastreamento,
+          mesmo que as entradas coincidam.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-elgamal" aria-labelledby="t-elgamal-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">3</span>
+          <h2 id="t-elgamal-h">ElGamal exponencial</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§10</span>A chave \(s\) nunca existe inteira. Veja a seção 4.</aside>
+        <p>
+          A chave pública da eleição é \(K = s\cdot B\). Cifrar um inteiro pequeno \(m\) com o <em>nonce</em> \(r \ne 0\):
+        </p>
+        \[ \mathsf{Enc}(m; r) = (\alpha, \beta) = (r\cdot B,\; m\cdot B + r\cdot K). \]
+        <p>
+          A mensagem vai no expoente (\(m\cdot B\), e não \(m\)). Isso torna a soma possível e a decifração lenta: só
+          se recupera \(m\) de \(m\cdot B\) por busca, o que basta porque \(m\) é no máximo o número de cédulas.
+        </p>
+
+        <div class="enunciado">
+          <span class="rotulo">Proposição 3.1 (correção).</span> \(\beta - s\cdot\alpha = m\cdot B\).
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          \(\beta - s\cdot\alpha = m\cdot B + r\cdot(s\cdot B) - s\cdot(r\cdot B) = m\cdot B\), porque a
+          multiplicação por escalar comuta.
+        </div>
+
+        <div class="enunciado">
+          <span class="rotulo">Proposição 3.2 (homomorfismo).</span>
+          \(\mathsf{Enc}(m_1; r_1) \oplus \mathsf{Enc}(m_2; r_2) = \mathsf{Enc}(m_1 + m_2;\, r_1 + r_2)\), onde
+          \(\oplus\) soma componente a componente.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          \((r_1 + r_2)\cdot B = r_1\cdot B + r_2\cdot B\) e \((m_1 + m_2)\cdot B + (r_1 + r_2)\cdot K = (m_1\cdot B +
+          r_1\cdot K) + (m_2\cdot B + r_2\cdot K)\), pela distributividade.
+        </div>
+
+        <div class="exemplo">
+          <span class="rotulo">Exemplo: três votos e a soma</span>
+          <p>Chave \(s = 3\), então \(K = g^3 = 8\). Três eleitores: sim (\(r=4\)), não (\(r=7\)), sim (\(r=2\)).</p>
+          \[ \begin{aligned}
+             \mathsf{Enc}(1;4) &amp;= (g^4,\; g^{1}\cdot 8^{4}) = (16,\; g^{1+12}) = (16,\; g^{2}) = (16, 4)\\
+             \mathsf{Enc}(0;7) &amp;= (g^7,\; 8^{7}) = (13,\; g^{21}) = (13,\; g^{10}) = (13, 12)\\
+             \mathsf{Enc}(1;2) &amp;= (g^2,\; g\cdot 8^{2}) = (4,\; g^{7}) = (4, 13)
+          \end{aligned} \]
+          <p>Somar é multiplicar componente a componente:</p>
+          \[ (16\cdot 13\cdot 4,\; 4\cdot 12\cdot 13) \bmod 23 = (4,\, 3). \]
+          <p>
+            Decifrando: \(s\cdot\alpha \mapsto 4^{3} = 64 \equiv 18\), e \(18^{-1} \equiv 9\) (pois \(18\cdot 9 = 162 =
+            7\cdot 23 + 1\)). Então \(\beta - s\cdot\alpha \mapsto 3\cdot 9 = 27 \equiv 4 = g^{2}\), e o total é
+            \(m = 2\). Conferindo pelos expoentes: \(r = 4+7+2 = 13 \equiv 2\), e \(\alpha = g^{2} = 4\). Confere.
+          </p>
+        </div>
+
+        <h3>Sigilo</h3>
+        <div class="enunciado">
+          <span class="rotulo">Teorema 3.3 (IND-CPA).</span> Se DDH vale em \(\mathbb{G}\), nenhum adversário eficiente
+          distingue \(\mathsf{Enc}(m_0)\) de \(\mathsf{Enc}(m_1)\), para \(m_0, m_1\) escolhidos por ele, com vantagem
+          não desprezível.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          Seja \(\mathcal{A}\) um adversário com vantagem \(\varepsilon\). Construímos \(\mathcal{D}\) que recebe
+          \((X, Y, Z) = (a\cdot B, b\cdot B, Z)\) e decide se \(Z = ab\cdot B\). \(\mathcal{D}\) entrega \(K = X\) a
+          \(\mathcal{A}\), recebe \(m_0, m_1\), sorteia um bit \(d\) e responde com \((\alpha, \beta) = (Y,\; m_d\cdot B +
+          Z)\). Se \(\mathcal{A}\) acerta \(d\), \(\mathcal{D}\) diz "DH".
+          <p>
+            Se \(Z = ab\cdot B\), o par é exatamente \(\mathsf{Enc}(m_d; b)\) sob a chave \(a\), e \(\mathcal{A}\) acerta
+            com probabilidade \(\tfrac12 + \varepsilon\). Se \(Z\) é uniforme, \(\beta\) é uniforme e independente de
+            \(d\), e \(\mathcal{A}\) acerta com probabilidade exatamente \(\tfrac12\). A vantagem de \(\mathcal{D}\) contra
+            DDH é \(\varepsilon\), que pela hipótese é desprezível.
+          </p>
+        </div>
+        <p>
+          <strong>Reencifrar</strong> (§10.3) é somar uma cifra de zero: \(\mathsf{ReEnc}((\alpha,\beta); r') = (\alpha
+          + r'\cdot B,\; \beta + r'\cdot K)\). O resultado cifra o mesmo \(m\) com nonce \(r + r'\), e pelo mesmo
+          argumento é indistinguível de uma cifra nova. A mixnet (seção 13) depende disso.
+        </p>
+        <p>
+          <strong>Ligação perfeita.</strong> Uma cifra determina o seu conteúdo: \(\alpha\) fixa \(r\) (único, pois a
+          ordem é prima) e então \(\beta - r\cdot K\) fixa \(m\cdot B\). Ninguém, nem com poder computacional infinito,
+          "abre" a mesma cifra como duas mensagens diferentes. A auditoria de Benaloh (seção 10) usa este fato.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-shamir" aria-labelledby="t-shamir-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">4</span>
+          <h2 id="t-shamir-h">Chave repartida e decifração por limiar</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§5.7, §8, §20</span>Shamir (1979), Feldman (1987), Pedersen (1991).</aside>
+        <p>
+          São \(n\) guardiões e um limiar \(k\). Um polinômio \(f(x) = a_0 + a_1x + \dots + a_{k-1}x^{k-1}\) sobre
+          \(\mathbb{Z}_\ell\) esconde o segredo \(s = f(0)\); o guardião \(j\) recebe a parte \(z_j = f(j)\).
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 4.1 (Lagrange).</span> Para qualquer conjunto \(S\) de \(k\) índices distintos,
+          \[ f(0) = \sum_{j\in S} \lambda_j(S)\, f(j), \qquad \lambda_j(S) = \prod_{m\in S,\, m\ne j} \frac{m}{m - j} \pmod \ell. \]
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          O polinômio \(L(x) = \sum_{j\in S} f(j)\prod_{m\ne j}\frac{x - m}{j - m}\) tem grau menor que \(k\) e vale
+          \(f(j)\) em cada \(j\in S\), porque o produto é 1 em \(x = j\) e 0 nos outros pontos de \(S\). Então
+          \(L - f\) tem grau menor que \(k\) e \(k\) raízes; num corpo, só o polinômio nulo faz isso. Logo \(L = f\), e
+          avaliar em \(x = 0\) dá a fórmula, já que \(\frac{0 - m}{j - m} = \frac{m}{m - j}\).
+        </div>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 4.2 (sigilo perfeito).</span> Quaisquer \(k-1\) partes são independentes de
+          \(s\): para cada valor \(s'\), existe exatamente um polinômio de grau menor que \(k\) que passa por
+          \((0, s')\) e pelas \(k-1\) partes.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          São \(k\) pontos com abscissas distintas. Pela Proposição 4.1, existe um polinômio de grau menor que \(k\) por
+          eles, e a unicidade vem do mesmo argumento das raízes. Como os coeficientes \(a_1, \dots, a_{k-1}\) são
+          uniformes, cada \(s'\) corresponde ao mesmo número de escolhas (exatamente uma), e as \(k-1\) partes têm a
+          mesma distribuição para todo segredo.
+        </div>
+
+        <h3>Verificação de Feldman e a cerimônia sem distribuidor</h3>
+        <p>
+          Cada guardião \(i\) sorteia o seu \(f_i\) e publica os compromissos \(F_{i,t} = a_{i,t}\cdot B\). A parte
+          \(f_i(j)\) segue cifrada por HPKE para o guardião \(j\), que confere
+          \[ f_i(j)\cdot B \overset{?}{=} \sum_{t=0}^{k-1} j^{t}\cdot F_{i,t}, \]
+          o que vale porque os dois lados são \(\big(\sum_t a_{i,t}j^t\big)\cdot B\). A chave da eleição é
+          \(s = \sum_i f_i(0)\), com \(K = \sum_i F_{i,0}\), e a parte de \(j\) é \(z_j = \sum_i f_i(j)\), que é o
+          valor em \(j\) do polinômio \(f = \sum_i f_i\). Ninguém conhece \(s\): cada \(f_i(0)\) só é conhecido por
+          \(i\). Cada \(F_{i,0}\) vem com uma prova de Schnorr (seção 5), o que impede um guardião de escolher o seu
+          \(F_{i,0}\) depois de ver os dos outros para cancelá-los. A chave de verificação \(Z_j = z_j\cdot B\) de cada
+          guardião é calculável a partir dos compromissos públicos.
+        </p>
+
+        <h3>Decifração por limiar</h3>
+        <p>
+          Para abrir \((\alpha, \beta)\), o guardião \(j\) publica \(M_j = z_j\cdot\alpha\) com uma prova de
+          Chaum-Pedersen (seção 6) de que usou o mesmo \(z_j\) de \(Z_j\). Com \(k\) partes válidas:
+        </p>
+        \[ \sum_{j\in S}\lambda_j M_j = \Big(\sum_{j\in S}\lambda_j z_j\Big)\cdot\alpha = s\cdot\alpha, \qquad
+           \beta - s\cdot\alpha = m\cdot B. \]
+        <p>A soma pesada \(s\cdot\alpha\) aparece; o escalar \(s\) não.</p>
+
+        <div class="exemplo">
+          <span class="rotulo">Exemplo: dois de três</span>
+          <p>
+            Para simplificar, um único distribuidor: \(f(x) = 3 + 5x\) sobre \(\mathbb{Z}_{11}\), então \(s = 3\). As
+            partes são \(z_1 = 8\), \(z_2 = 13 \equiv 2\), \(z_3 = 18 \equiv 7\). Os compromissos são \(F_0 = g^3 = 8\) e
+            \(F_1 = g^5 = 9\). O guardião 2 confere a sua parte: \(g^{2} = 4\) e \(F_0\cdot F_1^{2} = 8\cdot 81 \equiv
+            8\cdot 12 = 96 \equiv 4\). Confere.
+          </p>
+          <p>
+            Com os guardiões 1 e 3: \(\lambda_1 = \frac{3}{3-1} = 3\cdot 2^{-1} = 3\cdot 6 \equiv 7\) e \(\lambda_3 =
+            \frac{1}{1-3} = (-2)^{-1} \equiv 5\). De fato \(7\cdot 8 + 5\cdot 7 = 91 \equiv 3 = s\).
+          </p>
+          <p>
+            Abrindo o total \((4, 3)\) da seção 3: \(M_1 \mapsto 4^{8} = g^{16} = g^{5} = 9\) e \(M_3 \mapsto 4^{7} =
+            g^{14} = g^{3} = 8\). Combinando, \(M_1^{\lambda_1}M_3^{\lambda_3} = 9^{7}\cdot 8^{5} = g^{35}g^{15} = g^{50} =
+            g^{6} = 18\), que é \(s\cdot\alpha \mapsto 4^3 = 18\). O resto é como antes: \(m = 2\).
+          </p>
+        </div>
+        <p>
+          Com \(k-1\) guardiões desonestos, as partes deles não dizem nada sobre \(s\) (Proposição 4.2), e o sigilo
+          das cédulas se reduz ao Teorema 3.3. Com \(k\) desonestos, o sigilo acaba, mas a contagem não: uma parte
+          falsa não passa na prova de Chaum-Pedersen. A regra de blocos do manifesto (§7.2, regra 11) proíbe que um
+          bloco detenha \(k\) partes.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-schnorr" aria-labelledby="t-schnorr-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">5</span>
+          <h2 id="t-schnorr-h">Protocolos sigma e Fiat-Shamir</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§11.1</span>As provas viajam compactas, como \((c, v)\).</aside>
+        <p>
+          Um protocolo sigma tem três movimentos: o provador manda um compromisso, o verificador sorteia um desafio,
+          o provador responde. O de Schnorr prova conhecimento de \(x\) com \(X = x\cdot B\):
+        </p>
+        \[ u \xleftarrow{\$} \mathbb{Z}_\ell,\quad A = u\cdot B; \qquad c = \mathcal{H}(\texttt{schnorr}, \mathit{ctx}, X, A); \qquad v = u + c\,x. \]
+        <p>O verificador recalcula \(A' = v\cdot B - c\cdot X\) e aceita se \(c = \mathcal{H}(\texttt{schnorr}, \mathit{ctx}, X, A')\).</p>
+
+        <div class="exemplo">
+          <span class="rotulo">Exemplo</span>
+          <p>
+            \(x = 3\), \(X = 8\). O provador sorteia \(u = 6\): \(A = g^6 = 18\). Suponha que o hash dê \(c = 5\). Então
+            \(v = 6 + 5\cdot 3 = 21 \equiv 10\). O verificador calcula \(A' \mapsto g^{10}\cdot X^{-5} = 12\cdot (g^{15})^{-1}
+            = 12\cdot g^{-4} = 12\cdot g^{7} = 12\cdot 13 = 156 \equiv 18\). É o mesmo \(A\), então o hash dá o mesmo \(c\).
+          </p>
+        </div>
+
+        <p>Três propriedades fazem disso uma prova de conhecimento zero:</p>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 5.1.</span>
+          (i) <em>Completude:</em> quem conhece \(x\) sempre convence. (ii) <em>Solidez especial:</em> de duas respostas
+          aceitas \((c, v)\), \((c', v')\) ao mesmo \(A\), com \(c \ne c'\), extrai-se \(x\). (iii) <em>Conhecimento
+          zero com verificador honesto:</em> existe um simulador que, sem \(x\), produz transcrições com a mesma
+          distribuição das reais.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          (i) \(v\cdot B - c\cdot X = (u + cx)\cdot B - cx\cdot B = u\cdot B = A\).
+          (ii) De \(v\cdot B - c\cdot X = v'\cdot B - c'\cdot X\) vem \((v - v')\cdot B = (c - c')\cdot X\), então
+          \(x = (v - v')(c - c')^{-1}\), que existe porque \(\ell\) é primo.
+          (iii) Sorteie \(c\) e \(v\) uniformes e faça \(A = v\cdot B - c\cdot X\). Na transcrição real, \(c\) é uniforme,
+          \(v = u + cx\) é uniforme e independente de \(c\) (porque \(u\) é), e \(A\) é determinado pelos dois. As
+          distribuições coincidem.
+        </div>
+        <div class="exemplo">
+          <span class="rotulo">Exemplo: extraindo o segredo</span>
+          <p>
+            Com o mesmo \(A = 18\) e outro desafio \(c' = 7\): \(v' = 6 + 21 = 27 \equiv 5\). Então
+            \(x = (10 - 5)(5 - 7)^{-1} = 5\cdot 9^{-1} = 5\cdot 5 = 25 \equiv 3\). Por isso o provador nunca pode reusar
+            \(u\) (§28.2): duas provas com o mesmo \(u\) entregam a chave.
+          </p>
+        </div>
+        <p>
+          Pelo lema de bifurcação de Pointcheval e Stern, a solidez especial faz com que um provador que convence com
+          probabilidade não desprezível possa ser rebobinado para extrair \(x\), o que quebraria DL.
+        </p>
+
+        <h3>Por que o desafio precisa ver a afirmação inteira</h3>
+        <p>
+          Fiat-Shamir troca o verificador por um hash. A versão <em>forte</em> põe no hash a afirmação \(X\), o contexto
+          e os compromissos. A versão fraca, só com \(A\), é quebrável:
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Ataque 5.2 (Bernhard, Pereira e Warinschi, 2012).</span>
+          Se \(c = \mathcal{H}(A)\), qualquer um produz uma prova aceita para uma chave \(X\) cujo logaritmo ninguém
+          conhece.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Construção.</span>
+          Escolha \(A\) como um ponto de logaritmo desconhecido (por exemplo, um hash para o grupo). Calcule
+          \(c = \mathcal{H}(A)\), sorteie \(v\) e defina \(X = c^{-1}\cdot(v\cdot B - A)\). Então \(v\cdot B - c\cdot X = A\)
+          e a prova \((c, v)\) é aceita. Ninguém conhece \(\log_B X\), porque isso daria \(\log_B A\).
+        </div>
+        <p>
+          No Helios, uma versão desse ataque permitia cifras com votos fora de \(\{0,1\}\). Em eg/v1 todo desafio inclui
+          a afirmação e um \(\mathit{ctx}\) que fixa a eleição, a cédula, o cargo e a opção (§11). Uma prova copiada de
+          outra cédula não confere com o novo \(\mathit{ctx}\).
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-cp" aria-labelledby="t-cp-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">6</span>
+          <h2 id="t-cp-h">Chaum-Pedersen</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§11.2, §11.6</span>Igualdade de logaritmos discretos.</aside>
+        <p>
+          A mesma ideia, com duas bases: prova-se conhecer \(x\) tal que \(X_1 = x\cdot G_1\) e \(X_2 = x\cdot G_2\).
+          O compromisso usa o mesmo \(u\) nas duas bases, \(A_1 = u\cdot G_1\), \(A_2 = u\cdot G_2\), e a resposta é
+          \(v = u + cx\). Completude, solidez especial e simulação seguem como na Proposição 5.1, com a extração dando o
+          mesmo \(x\) para as duas igualdades.
+        </p>
+        <p>
+          A <strong>prova de parte de decifração</strong> é Chaum-Pedersen com \((G_1, X_1) = (B, Z_j)\) e
+          \((G_2, X_2) = (\alpha, M_j)\): o guardião mostra que aplicou a \(\alpha\) a mesma parte que está registrada
+          na cerimônia.
+        </p>
+        <div class="exemplo">
+          <span class="rotulo">Exemplo: uma parte honesta</span>
+          <p>
+            Usamos a chave inteira \(x = 3\) para encurtar: \(X_1 = K = 8\), \(G_2 = \alpha = 4\), \(X_2 = M = 4^{3} =
+            18\). Com \(u = 6\): \(A_1 = g^6 = 18\), \(A_2 = 4^{6} = g^{12} = g = 2\). Com \(c = 5\), \(v = 10\).
+          </p>
+          <p>
+            Conferência: \(A_1' \mapsto g^{10}\cdot 8^{-5} = 18\), como na seção 5. \(A_2' \mapsto 4^{10}\cdot 18^{-5} =
+            g^{20}\cdot g^{-30} = g^{-10} = g^{1} = 2\). Os dois compromissos batem.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-disj" aria-labelledby="t-disj-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">7</span>
+          <h2 id="t-disj-h">A prova de 0 ou 1</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§11.3</span>Cramer, Damgård e Schoenmakers, CRYPTO 1994.</aside>
+        <p>
+          Afirmação: \((\alpha, \beta) = \mathsf{Enc}(b; r)\) para algum \(b \in \{0,1\}\). Equivalentemente, para algum
+          \(b\), o par \((\alpha,\, \beta - b\cdot B)\) é \(r\cdot(B, K)\): uma igualdade de logaritmos com bases
+          \(B, K\). São duas afirmações de Chaum-Pedersen ligadas por "ou".
+        </p>
+        <p>O provador conhece \(b\) e \(r\). Seja \(f = 1 - b\) o ramo falso.</p>
+        \[ \begin{aligned}
+           &amp;\text{ramo falso (simulado):} &amp;&amp; c_f, v_f \xleftarrow{\$} \mathbb{Z}_\ell,\quad A_f = v_f\cdot B - c_f\cdot\alpha,\quad D_f = v_f\cdot K - c_f\cdot(\beta - f\cdot B)\\
+           &amp;\text{ramo verdadeiro:} &amp;&amp; u \xleftarrow{\$} \mathbb{Z}_\ell,\quad A_b = u\cdot B,\quad D_b = u\cdot K\\
+           &amp;\text{desafio:} &amp;&amp; c = \mathcal{H}(\texttt{disj01}, \mathit{ctx}, \alpha, \beta, A_0, D_0, A_1, D_1),\quad c_b = c - c_f,\quad v_b = u + c_b\, r
+        \end{aligned} \]
+        <p>
+          A prova é \((c_0, c_1, v_0, v_1)\). O verificador recalcula \(A_j' = v_j\cdot B - c_j\cdot\alpha\) e \(D_j' =
+          v_j\cdot K - c_j\cdot(\beta - j\cdot B)\) para \(j \in \{0, 1\}\) e aceita se \(c_0 + c_1 =
+          \mathcal{H}(\dots, A_0', D_0', A_1', D_1')\).
+        </p>
+
+        <div class="exemplo">
+          <span class="rotulo">Exemplo: provando que \((16, 4)\) é 0 ou 1</span>
+          <p>
+            É a cifra \(\mathsf{Enc}(1; 4)\) da seção 3, então \(b = 1\), \(f = 0\). Inversos úteis: \(\alpha^{-1} = 16^{-1} =
+            g^{-4} = g^{7}\), \(\beta^{-1} = 4^{-1} = g^{-2} = g^{9}\).
+          </p>
+          <p>
+            <em>Ramo 0, simulado</em> com \(c_0 = 3\), \(v_0 = 2\): \(A_0 \mapsto g^{2}\alpha^{-3} = g^{2}g^{21} = g^{23} =
+            g^{1} = 2\), e \(D_0 \mapsto K^{2}\beta^{-3} = g^{6}g^{27} = g^{33} = g^{0} = 1\).
+          </p>
+          <p>
+            <em>Ramo 1, verdadeiro</em> com \(u = 6\): \(A_1 = g^{6} = 18\), \(D_1 = K^{6} = g^{18} = g^{7} = 13\).
+          </p>
+          <p>
+            Suponha que o hash dê \(c = 9\). Então \(c_1 = 9 - 3 = 6\) e \(v_1 = 6 + 6\cdot 4 = 30 \equiv 8\). A prova é
+            \((3, 6, 2, 8)\).
+          </p>
+          <p>
+            Conferência do ramo 1: \(A_1' \mapsto g^{8}\alpha^{-6} = g^{8}g^{-24} = g^{-16} = g^{6} = 18\). E \(\beta - B
+            \mapsto 4\cdot 2^{-1} = 2 = g\), então \(D_1' \mapsto K^{8}g^{-6} = g^{24 - 6} = g^{18} = g^{7} = 13\). O ramo 0
+            recalcula \(2\) e \(1\), como construído. E \(c_0 + c_1 = 9 = c\). Aceita, sem que nada indique qual ramo
+            é o verdadeiro.
+          </p>
+        </div>
+
+        <div class="enunciado">
+          <span class="rotulo">Proposição 7.1.</span> A prova é completa, tem solidez especial (de duas provas aceitas
+          com os mesmos compromissos e desafios totais diferentes extrai-se \(r\) e um \(b \in \{0,1\}\) válido) e
+          esconde \(b\): a distribuição da prova é a mesma para \(b = 0\) e \(b = 1\).
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          <em>Completude.</em> No ramo falso, \(A_f'\) e \(D_f'\) são, por construção, exatamente \(A_f\) e \(D_f\). No
+          verdadeiro, \(v_b\cdot B - c_b\cdot\alpha = (u + c_b r)\cdot B - c_b r\cdot B = A_b\) e, como
+          \(\beta - b\cdot B = r\cdot K\), também \(D_b' = D_b\). A soma \(c_0 + c_1 = c_f + (c - c_f) = c\).
+          <p>
+            <em>Solidez especial.</em> Sejam duas provas aceitas com os mesmos \((A_0, D_0, A_1, D_1)\) e
+            \(c_0 + c_1 \ne c_0' + c_1'\). Então \(c_j \ne c_j'\) para algum \(j\). Pelo argumento da Proposição 5.1(ii)
+            aplicado ao ramo \(j\), \(r = (v_j - v_j')(c_j - c_j')^{-1}\) satisfaz \(\alpha = r\cdot B\) e \(\beta - j\cdot B =
+            r\cdot K\). Logo a cifra é \(\mathsf{Enc}(j; r)\) com \(j \in \{0, 1\}\). Uma cifra de, digamos, \(500\) não tem
+            esse \(j\), então nenhum provador eficiente a defende: o desafio total vem do hash e cai uniforme, e só
+            um dos dois desafios pode ser escolhido antes.
+          </p>
+          <p>
+            <em>Sigilo de \(b\).</em> Nos dois casos, \((c_0, v_0, c_1, v_1)\) é: \(c_0, c_1\) uniformes com soma \(c\), e
+            \(v_0, v_1\) uniformes e independentes; os compromissos são funções desses valores. No ramo simulado isso
+            é por construção; no verdadeiro, \(v_b = u + c_b r\) é uniforme porque \(u\) é. As distribuições não dependem
+            de \(b\).
+          </p>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-cedula" aria-labelledby="t-cedula-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">8</span>
+          <h2 id="t-cedula-h">A cédula inteira</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§12</span>Inclui os vínculos entre as duas vagas de senador (§12.3a).</aside>
+        <p>
+          Um cargo homomórfico com \(m\) opções e até \(L\) escolhas vira \(m + L\) cifras: uma por opção (candidatos,
+          branco, nulo) e \(L\) <em>marcadores</em> que completam a soma. Cada cifra leva uma prova de 0 ou 1, e a soma
+          de todas leva uma prova de que vale exatamente \(L\) (§11.4): Chaum-Pedersen com
+        </p>
+        \[ (G_1, X_1) = (B,\; \alpha_\Sigma), \qquad (G_2, X_2) = (K,\; \beta_\Sigma - L\cdot B), \qquad x = r_\Sigma = \textstyle\sum r. \]
+        <p>
+          Se o eleitor escolhe \(q \le L\) opções, os primeiros \(L - q\) marcadores cifram 1. Juntas, as provas dizem:
+          cada cifra é 0 ou 1, e o total é \(L\). Portanto nenhuma opção recebe mais de um voto e o eleitor não
+          escolheu mais do que podia.
+        </p>
+        <p>
+          Todos os nonces vêm de uma semente \(\rho\) de 32 bytes, por
+          \(r = \mathcal{H}(\texttt{nonce}, \mathit{ctx\_hash}, \mathit{ballot\_id}, \rho, \mathit{contest}, \mathit{pos})\).
+          Revelar \(\rho\) permite recriar cada cifra (auditoria); apagá-lo depois do depósito impede o eleitor de
+          provar o voto (ausência de recibo).
+        </p>
+        <h3>Cópia de cédulas</h3>
+        <p>
+          Cortier e Smyth (2011) mostraram que copiar a cifra de um eleitor para uma cédula própria, numa seção pequena,
+          desloca o total pelo voto da vítima e o revela. Duas defesas fecham isso. As provas são amarradas à cédula pelo
+          \(\mathit{ctx}\), então uma cifra copiada não leva junto uma prova válida, e quem não conhece o nonce não
+          consegue fazer outra. E cada \(\alpha\) só pode aparecer uma vez na apuração: um \(\alpha\) repetido em cédula
+          posterior faz aquele cargo ser excluído (<em>reserva de \(\alpha\)</em>, §12.6).
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-codigo" aria-labelledby="t-codigo-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">9</span>
+          <h2 id="t-codigo-h">Códigos e a corrente da urna</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§13</span>O código curto são os primeiros 100 bits, em base32 de Crockford.</aside>
+        <p>Cada sessão da urna mantém uma cadeia. A cabeça inicial vem da zerésima:</p>
+        \[ h_0 = \mathsf{D}(\texttt{chain-start}, \mathit{ctx\_hash}, \mathit{machine}, \mathit{session}, \mathit{software}, \mathit{opening}), \]
+        \[ \mathit{code}_s = \mathsf{D}\big(\texttt{code},\, h_{s-1},\, \mathsf{D}(\texttt{ballot}, \mathit{ballot}_s)\big), \qquad
+           h_s = \mathsf{D}(\texttt{chain}, \mathit{code}_s, \mathit{status}_s, \mathit{reveal}_s). \]
+        <div class="enunciado">
+          <span class="rotulo">Proposição 9.1 (o código compromete o passado).</span> Se duas sequências de
+          (cédula, estado, revelação) diferentes, partindo da mesma \(h_0\), produzem o mesmo \(\mathit{code}_s\), então
+          encontra-se uma colisão de SHA-256.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          Por indução em \(s\). Iguais \(\mathit{code}_s\) implicam entradas iguais de \(\mathsf{D}\) ou uma colisão. Entradas
+          iguais significam \(h_{s-1}\) igual e \(\mathsf{D}(\texttt{ballot}, \mathit{ballot}_s)\) igual; o segundo dá cédulas
+          iguais ou colisão. \(h_{s-1}\) igual dá \(\mathit{code}_{s-1}\), estado e revelação iguais ou colisão, e a hipótese
+          de indução se aplica a \(\mathit{code}_{s-1}\). A codificação CBOR é injetiva (seção 2), então "entradas iguais"
+          é o mesmo que "valores iguais".
+        </div>
+        <p>
+          Consequências: o eleitor que guarda o código \(s\) detecta a remoção, a troca ou a reordenação de qualquer
+          cédula anterior da mesma sessão. Como cada código inclui a cabeça anterior e a máquina, dois eleitores nunca
+          recebem o mesmo código, o que impede o <em>ataque de colisão</em> (§28.4): dar o mesmo recibo a dois eleitores
+          com votos iguais e usar a vaga livre para uma cédula forjada. Os 100 bits do código curto dão \(2^{-100}\) de
+          chance de coincidência acidental, e o código inteiro de 256 bits vai no QR.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-benaloh" aria-labelledby="t-benaloh-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">10</span>
+          <h2 id="t-benaloh-h">Auditoria de Benaloh</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§14</span>Benaloh, "Simple verifiable elections", EVT 2006.</aside>
+        <p>
+          A urna cifra, exibe \(\mathit{code}_s\) e só então pergunta: depositar ou auditar. Ao auditar, ela publica
+          \(\rho\) e as escolhas que afirma ter cifrado, num recibo assinado. Um aparelho independente recria cada nonce
+          a partir de \(\rho\), recifra as escolhas declaradas e compara byte a byte com a cédula publicada no mural.
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 10.1.</span> Suponha que (a) cada cédula é auditada com probabilidade \(p\),
+          independentemente, e que a urna não sabe a decisão antes de exibir o código; (b) a conferência roda num aparelho
+          independente. Se a urna cifra \(k\) cédulas com conteúdo diferente da escolha do eleitor, a probabilidade de
+          nenhuma ser detectada é no máximo \((1 - p)^{k} + \varepsilon\), com \(\varepsilon\) a chance de achar uma
+          colisão de SHA-256.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          Fixe uma cédula adulterada. Pela Proposição 9.1, depois que o código foi exibido a urna não pode trocar a cédula
+          comprometida sem colisão. Se a cédula é auditada, a urna precisa apresentar \(\rho\) e escolhas cujas cifras
+          igualem as comprometidas. Pela ligação perfeita do ElGamal (seção 3), as cifras determinam as mensagens, então
+          as escolhas reveladas são necessariamente as cifradas, que diferem das do eleitor. O eleitor ou fiscal vê a
+          diferença, ou a conferência falha. Logo cada cédula adulterada escapa só se não for auditada, com probabilidade
+          \(1 - p\), e pela independência de (a) as \(k\) escapam juntas com probabilidade \((1-p)^{k}\).
+        </div>
+        <div class="tabela">
+          <table>
+            <thead><tr><th>cédulas trocadas \(k\)</th><th>\(p = 1\%\)</th><th>\(p = 5\%\)</th><th>\(p = 10\%\)</th></tr></thead>
+            <tbody>
+              <tr><td class="n">10</td><td class="n">90,4%</td><td class="n">59,9%</td><td class="n">34,9%</td></tr>
+              <tr><td class="n">50</td><td class="n">60,5%</td><td class="n">7,7%</td><td class="n">0,52%</td></tr>
+              <tr><td class="n">100</td><td class="n">36,6%</td><td class="n">0,59%</td><td class="n">0,003%</td></tr>
+              <tr><td class="n">500</td><td class="n">0,66%</td><td class="n">\(\approx 7\times 10^{-12}\)</td><td class="n">\(\approx 10^{-23}\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          A tabela dá a chance de a urna escapar. Trocar poucos votos é difícil de pegar; trocar votos suficientes para
+          mudar uma eleição não é. A hipótese (a) é a frágil: uma urna que adivinha quem vai auditar (pela demora, pelo
+          perfil) escapa mais. Por isso a especificação recomenda sessões de auditoria de fiscais ao longo do dia e
+          pedidos de auditoria sorteados (§14.3).
+        </p>
+        <p>
+          A hipótese (b) é essencial. O verificador público sozinho não detecta a troca: a cédula adulterada tem provas
+          válidas, e o recibo assinado é coerente com ela. Só a comparação com a escolha real do eleitor revela o
+          problema (anotado como questão 27 na lista de lacunas da especificação).
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-mural" aria-labelledby="t-mural-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">11</span>
+          <h2 id="t-mural-h">O mural como árvore de Merkle</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§17</span>Formato do RFC 9162 (Certificate Transparency 2.0).</aside>
+        <p>
+          O mural é um registro só de acréscimos. Suas \(n\) entradas \(d_0, \dots, d_{n-1}\) formam uma árvore de
+          Merkle com prefixos distintos para folhas e nós:
+        </p>
+        \[ \mathrm{MTH}(\{d\}) = \mathrm{SHA256}(\texttt{0x00} \,\|\, d), \qquad
+           \mathrm{MTH}(D_n) = \mathrm{SHA256}\big(\texttt{0x01} \,\|\, \mathrm{MTH}(D[0{:}k]) \,\|\, \mathrm{MTH}(D[k{:}n])\big), \]
+        <p>
+          com \(k\) a maior potência de 2 menor que \(n\). O mural assina uma <em>cabeça</em> \((n, R)\) com
+          \(R = \mathrm{MTH}(D_n)\).
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 11.1 (prova de inclusão).</span> Uma prova de que \(d\) é a entrada \(i\) sob a
+          raiz \(R\) tem \(\lceil\log_2 n\rceil\) hashes. Se \(d\) não é a entrada \(i\) e a prova confere, encontra-se uma
+          colisão de SHA-256.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          A prova é a lista dos irmãos no caminho de \(i\) até a raiz. Recalcule o caminho a partir de \(d\) e a partir
+          da entrada verdadeira. Os dois terminam em \(R\) e começam diferentes. Suba até o primeiro nível em que os
+          valores coincidem: abaixo dele as entradas de SHA-256 diferem, e as saídas são iguais. Os prefixos
+          \(\texttt{0x00}\) e \(\texttt{0x01}\) impedem que uma folha se passe por um nó interno, então as duas entradas
+          têm o mesmo formato e formam uma colisão.
+        </div>
+        <p>
+          Uma <em>prova de consistência</em> entre cabeças \((n_1, R_1)\) e \((n_2, R_2)\), \(n_1 \le n_2\), mostra com
+          \(O(\log n_2)\) hashes que as primeiras \(n_1\) entradas não mudaram. Duas cabeças assinadas que falham na
+          consistência, ou duas com o mesmo \(n\) e raízes diferentes, são uma prova assinada de <em>equivocação</em>
+          (§17.4): o mural mostrou histórias diferentes. Os espelhos, mantidos fora do bloco da Justiça Eleitoral (§7.2,
+          regra 13), trocam cabeças entre si e com os aplicativos dos eleitores, de modo que basta um espelho honesto.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-apuracao" aria-labelledby="t-apuracao-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">12</span>
+          <h2 id="t-apuracao-h">Apuração por seção e boletins</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§15, §16, §18</span>Seção pequena: abaixo de <code>min_section_ballots</code>.</aside>
+        <p>
+          A urna grava um diário encadeado, assina a zerésima (que contém \(h_0\)) e, no fim, o <em>pré-BU</em>. Este traz
+          a contagem do caderno de votação, o número de cédulas e a impressão digital
+          \(\mathsf{D}(\texttt{subtotal}, \dots, (\alpha_\Sigma, \beta_\Sigma)_{\text{cargo, opção}})\) das somas cifradas
+          da seção. A urna calcula essas somas pela Proposição 3.2, sem decifrar nada.
+        </p>
+        <p>
+          Depois do envio, qualquer um recalcula a soma da seção a partir das cédulas válidas no mural (julgadas pelo
+          §12.6, com a reserva de \(\alpha\)) e compara com a impressão digital no papel. Os guardiões decifram essa soma
+          com partes provadas (seção 4). O BU final publica os números, as provas e a mesma impressão digital.
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Proposição 12.1.</span> Se o BU final confere (provas de parte válidas, impressão digital
+          igual à do pré-BU guardado pelo fiscal), então os números do BU são o conteúdo das cédulas válidas daquela
+          seção, a menos de uma colisão de SHA-256 ou de uma prova de Chaum-Pedersen forjada.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          A impressão digital fixa as cifras somadas. Cada parte \(M_j\) é \(z_j\cdot\alpha_\Sigma\) pela solidez da seção 6,
+          então a combinação é \(s\cdot\alpha_\Sigma\) (Proposição 4.1) e \(\beta_\Sigma - s\cdot\alpha_\Sigma = m\cdot B\) com
+          \(m\) a soma dos conteúdos (Proposições 3.1 e 3.2). Como \(m\) é limitado pelo número de cédulas, a busca do
+          logaritmo é exata.
+        </div>
+        <p>
+          Uma seção com poucas cédulas revelaria votos individuais (no extremo, uma seção de um eleitor). Seções abaixo
+          do mínimo entram num <em>pool</em> regional, aberto só como um todo. O total de cada cargo é a soma dos BUs
+          finais e dos pools.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-mixnet" aria-labelledby="t-mixnet-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">13</span>
+          <h2 id="t-mixnet-h">Embaralhamento verificável</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§19, Apêndice B</span>Terelius e Wikström, AFRICACRYPT 2010.</aside>
+        <p>
+          Em cargos contados por mixnet, cada cédula é uma lista de cifras de \(\text{opção} + 1\) (ou 0 para vazio).
+          Cada misturador recebe \(N\) linhas \(E_1, \dots, E_N\), escolhe uma permutação \(\pi\) e nonces novos e publica
+        </p>
+        \[ E'_i = \mathsf{ReEnc}\big(E_{\pi(i)};\, r'_i\big), \]
+        <p>
+          com uma prova de que existe tal \(\pi\). Sob DDH, as saídas são indistinguíveis de cifras novas (seção 3), então
+          um misturador honesto apaga a ligação entre entrada e saída. Como a ligação final é a composição de todas as
+          permutações, basta um misturador honesto na cadeia. A cadeia exige pelo menos <code>min_mixers</code>
+          guardiões distintos.
+        </p>
+        <h3>A ideia da prova</h3>
+        <p>
+          O misturador se compromete com a matriz \(M\) da permutação, coluna a coluna, por compromissos de Pedersen.
+          Depois prova duas coisas sobre a matriz comprometida, e a seguinte caracterização garante que ela é mesmo uma
+          permutação.
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Teorema 13.1.</span> Uma matriz \(M \in \mathbb{Z}_\ell^{N\times N}\) é de permutação se e
+          somente se (i) \(M\mathbf{1} = \mathbf{1}\) e (ii) \(\prod_{i=1}^{N} \langle m_i, \mathbf{x}\rangle =
+          \prod_{i=1}^{N} x_i\) como polinômios em \(x_1, \dots, x_N\), onde \(m_i\) é a linha \(i\).
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          Se \(M\) é de permutação, cada linha tem um único 1, em colunas distintas: (i) vale e o produto em (ii) é
+          \(\prod_i x_{\sigma(i)} = \prod_i x_i\).
+          <p>
+            Reciprocamente, \(\mathbb{Z}_\ell[x_1, \dots, x_N]\) tem fatoração única, e cada \(x_j\) é irredutível. Por (ii),
+            cada forma linear \(\langle m_i, \mathbf{x}\rangle\) divide \(x_1\cdots x_N\), logo é um múltiplo escalar
+            \(c_i x_{\sigma(i)}\) de uma única variável (formas lineares não nulas têm grau 1; nenhuma pode ser nula, ou o
+            produto seria 0). Comparando os dois lados, cada variável aparece exatamente uma vez, então \(\sigma\) é uma
+            bijeção e \(\prod c_i = 1\). Agora (i) diz que a soma da linha \(i\), que é \(c_i\), vale 1. Portanto cada linha
+            tem um único 1, em colunas distintas.
+          </p>
+        </div>
+        <p>
+          O verificador não testa uma identidade de polinômios inteira: escolhe \(\mathbf{x}\) aleatório (via
+          Fiat-Shamir). Pelo lema de Schwartz-Zippel, dois polinômios distintos de grau \(N\) coincidem num ponto
+          aleatório com probabilidade no máximo \(N/\ell \approx N\cdot 2^{-252}\). A prova completa acrescenta uma
+          cadeia de compromissos para (ii) e uma prova de que as saídas são as entradas reencifradas na ordem
+          comprometida.
+        </p>
+        <p>
+          Depois da última mistura, os guardiões decifram cada linha (seção 4) e contam. O risco próprio desta etapa é o
+          "ataque italiano" (§28.14): com muitas opções por linha, uma combinação incomum identifica um eleitor coagido.
+          Por isso as linhas são estreitas.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-resultado" aria-labelledby="t-resultado-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">14</span>
+          <h2 id="t-resultado-h">Do total ao eleito</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§21, §22</span>Só aritmética inteira, para que todos os verificadores concordem.</aside>
+        <p>
+          Os totais verificados viram resultado por regras públicas, recalculadas pelo verificador:
+        </p>
+        <ul>
+          <li>
+            <strong>Maioria absoluta</strong> (presidente, governador): votos válidos excluem brancos e nulos. Há
+            vencedor no primeiro turno se \(2v_{\max} \gt V\), com \(V\) o total de válidos. Senão, segundo turno entre os
+            dois primeiros.
+          </li>
+          <li>
+            <strong>Maioria simples com \(L\) vagas</strong> (senado): os \(L\) mais votados, somando as vagas ligadas.
+          </li>
+          <li>
+            <strong>Proporcional</strong>: D'Hondt, ou a regra <code>brazil-2021</code>. Nesta, o quociente eleitoral
+            \(QE\) é \(V\) dividido pelas vagas, desprezando a fração até \(\tfrac12\) e arredondando para cima acima
+            disso. Vagas por quociente exigem candidato com 10% do \(QE\); as sobras vão por maiores médias a listas com
+            80% do \(QE\) e candidatos com 20%. A especificação anota casos sem regra legal clara, como \(QE = 0\).
+          </li>
+        </ul>
+        <p>
+          Todos os critérios de desempate são determinísticos. Um verificador que recalcula e chega a outro eleito
+          aponta exatamente o passo que diverge (§23, passo 14).
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="t-verificador" aria-labelledby="t-verificador-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">15</span>
+          <h2 id="t-verificador-h">O verificador</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§23</span>Entrada: uma cópia do mural e ao menos uma cabeça assinada.</aside>
+        <p>
+          O verificador junta as proposições anteriores. Cada passo reduz uma afirmação pública a uma conta que qualquer
+          um refaz:
+        </p>
+        <div class="tabela">
+          <table>
+            <thead><tr><th>passo</th><th>confere</th><th>apoia-se em</th></tr></thead>
+            <tbody>
+              <tr><td class="n">1</td><td>raiz de Merkle, assinatura e consistência das cabeças</td><td>Prop. 11.1</td></tr>
+              <tr><td class="n">2</td><td>manifesto: assinatura e as 13 regras, inclusive blocos</td><td>§7.2</td></tr>
+              <tr><td class="n">3</td><td>cerimônia: provas de Schnorr, aceitação, \(K\) e \(Z_j\)</td><td>seções 4, 5</td></tr>
+              <tr><td class="n">4</td><td>o hash de contexto</td><td>seção 2</td></tr>
+              <tr><td class="n">5</td><td>cadastro, programas aprovados e congelamento</td><td>§7.7, §24</td></tr>
+              <tr><td class="n">6</td><td>cada pacote e cada cédula, com reserva de \(\alpha\)</td><td>seções 7 a 9</td></tr>
+              <tr><td class="n">7</td><td>completude: seções ausentes, pré-BUs sem pacote, comparecimento</td><td>§16</td></tr>
+              <tr><td class="n">8</td><td>cada cédula auditada contra a sua revelação</td><td>seção 10</td></tr>
+              <tr><td class="n">9</td><td>somas por seção, pool e índice, contra o pré-BU</td><td>Prop. 3.2, 12.1</td></tr>
+              <tr><td class="n">10</td><td>cada embaralhamento e a cadeia de misturadores</td><td>Teor. 13.1</td></tr>
+              <tr><td class="n">11</td><td>cada parte de decifração</td><td>seções 4, 6</td></tr>
+              <tr><td class="n">12</td><td>cada BU final</td><td>Prop. 12.1</td></tr>
+              <tr><td class="n">13</td><td>contagem por cargo</td><td>seção 12</td></tr>
+              <tr><td class="n">14</td><td>distribuição de vagas</td><td>seção 14</td></tr>
+              <tr><td class="n">15</td><td>o resultado publicado</td><td>passos 13 e 14</td></tr>
+              <tr><td class="n">16</td><td>relatório de independência</td><td>§2.4</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="enunciado">
+          <span class="rotulo">Corolário 15.1 (integridade).</span> Sob DL, colisões difíceis de SHA-256, o modelo do oráculo
+          aleatório e a infalsificabilidade de Ed25519: se o verificador aceita, o resultado publicado é a contagem correta
+          das cédulas válidas no mural. Nenhum guardião, urna, mural ou Justiça Eleitoral precisa ser honesto para isso.
+        </div>
+        <p>
+          O corolário fala das cédulas <em>no mural</em>. Que elas sejam as que os eleitores escolheram depende ainda da
+          auditoria de Benaloh (seção 10), dos códigos conferidos (seção 9) e dos fiscais com o pré-BU (seção 12). O passo
+          16 existe para dizer onde essas condições não foram cumpridas.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="limites" aria-labelledby="limites-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">16</span>
+          <h2 id="limites-h">Limites e questões em aberto</h2>
+        </div>
+        <p>
+          Das considerações de segurança da especificação (§28), as que limitam o que o sistema promete:
+        </p>
+        <ul class="problemas">
+          <li>
+            <h4>Sigilo contra a própria urna (§28.7, §28.8)</h4>
+            <p>
+              A urna vê o texto claro. Uma urna maliciosa pode vazá-lo por canais ocultos ou escolher \(\rho\)
+              cleptograficamente, de modo que quem conhece um segredo recupere os votos dos nonces. Benaloh não detecta
+              isso, porque a cédula auditada é honesta. Mitigações: geradores certificados, atestação, e no futuro
+              aleatoriedade contribuída por outro aparelho.
+            </p>
+          </li>
+          <li>
+            <h4>Conluio de \(k\) guardiões (§2.1)</h4>
+            <p>Quebra o sigilo de todas as cédulas, não a contagem.</p>
+          </li>
+          <li>
+            <h4>Ordem das cédulas (§28.6)</h4>
+            <p>
+              As cédulas aparecem no mural na ordem da urna. O sigilo depende de não se registrarem a ordem e os horários
+              dos eleitores, e da dificuldade de DL. Não há sigilo eterno: um computador quântico, ou o futuro, abre o
+              passado. A integridade já verificada não é afetada.
+            </p>
+          </li>
+          <li>
+            <h4>Auditoria ao lado do voto (§28.13)</h4>
+            <p>A revelação auditada fica na cadeia logo antes do voto depositado pelo mesmo eleitor.</p>
+          </li>
+          <li>
+            <h4>Invalidação seletiva (§28.15)</h4>
+            <p>
+              A urna conhece o texto claro e pode anexar provas ruins só aos votos de um candidato. Esses cargos são
+              excluídos, mas a exclusão é pública, atribuída à urna e faz o pré-BU divergir da soma recalculada.
+            </p>
+          </li>
+          <li>
+            <h4>Atestação humana e chaves provisionadas (§28.16 a §28.18)</h4>
+            <p>
+              Sem nenhum mesário ou fiscal honesto, uma seção pode inflar o comparecimento até o número de inscritos. Se a
+              Justiça Eleitoral guardasse as chaves das urnas, poderia forjar uma seção inteira; a defesa é gerar as chaves
+              dentro dos aparelhos e as assinaturas de fiscais certificados pelos partidos.
+            </p>
+          </li>
+          <li>
+            <h4>Voto trocado com recibo coerente (lacuna 27)</h4>
+            <p>Detectado só pela conferência do eleitor (seção 10), nunca pelo verificador público.</p>
+          </li>
+          <li>
+            <h4>Lacunas encontradas na implementação</h4>
+            <p>
+              Uma gravação de comprimento danificada no meio do diário parece uma escrita interrompida no fim e descarta em
+              silêncio as cédulas seguintes (lacuna 18); importações de pacotes recuperados não são registradas no diário
+              (17); um pacote importado por dois pré-BUs seria contado duas vezes (22); o verificador reaproveita código do
+              produtor, contra o §23 (9); \(QE = 0\) e quocientes acima das vagas não têm regra legal (3, 4).
+            </p>
+          </li>
+          <li>
+            <h4>Escala nacional (§28.19, §29)</h4>
+            <p>
+              Um cargo proporcional com 1.500 opções custa 1.500 cifras e provas por cédula e milhares de partes por seção,
+              em cerca de 470 mil seções. Provas de decifração em lote são prioridade.
+            </p>
+          </li>
+        </ul>
+      </section>
+
+      <nav class="convite" aria-label="Continuar">
+        <a class="cartao" href="./">
+          <h3>Início</h3>
+          <p>A mesma história sem fórmulas, com as dúvidas mais comuns.</p>
+        </a>
+        <a class="cartao" href="./oficina.html">
+          <h3>Oficina</h3>
+          <p>Rode estas contas de verdade: uma eleição inteira no navegador, com o verificador dos 16 passos.</p>
+        </a>
+      </nav>
+
+      <footer class="colofao">
+        <span>Referências: SPEC.md (eg/v1, rascunho 0.4) e o percurso em docs/walkthrough.</span>
+        <span class="espelho" aria-hidden="true">Urna à Prova</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/site/tecnico.ts"></script>
+  </body>
+</html>

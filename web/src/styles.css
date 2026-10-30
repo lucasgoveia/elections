@@ -1,26 +1,28 @@
-/* Urna Lab. Every colour and face comes from DESIGN.md's tokens. */
+/* Oficina (Urna Lab). Every colour and face comes from DESIGN.md's tokens. The
+ * page sits on the same notebook paper as Início and Técnico; the urna and the
+ * printed strips keep their own modern materials, as objects pasted in. */
 
 :root {
-  --wall: #c9cfc7;
-  --slate: #24302b;
+  --wall: #e6d8b9;
+  --slate: #2b1e13;
   --paper: #fbfbf7;
-  --ink: #161a18;
-  --muted: #55605a;
+  --ink: #2b1e13;
+  --muted: #6b5034;
   --urna: #d8d2c2;
   --lcd: #e3e9df;
   --key: #111111;
   --confirma: #1f8a3b;
   --corrige: #e86a17;
   --branco: #f4f4f0;
-  --stamp: #b3261e;
+  --stamp: #9a3a21;
   --auditar: #2f5d9e;
 
   /* Derived from the tokens above. */
   --panel: color-mix(in srgb, var(--wall) 70%, var(--paper));
   --rule: color-mix(in srgb, var(--ink) 22%, transparent);
 
-  --font-display: 'Bricolage Grotesque', 'Public Sans', system-ui, sans-serif;
-  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'IM Fell English', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'EB Garamond', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-mono: 'Martian Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   color-scheme: light;
@@ -41,9 +43,13 @@ body {
 }
 
 body {
-  background: var(--wall);
+  background-color: var(--wall);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(120 82 40 / 0.16) 100%);
+  background-attachment: scroll, fixed;
   color: var(--ink);
-  font: 400 14px/1.45 var(--font-body);
+  font: 400 16px/1.45 var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -64,7 +70,7 @@ body {
 
 .display {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .muted {
@@ -72,7 +78,7 @@ body {
 }
 
 .small {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .lead {
@@ -110,7 +116,7 @@ body {
 
 .brand {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
   white-space: nowrap;
 }
@@ -193,7 +199,7 @@ body {
 
 .col-title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
   margin: 0 0 12px;
 }
@@ -206,7 +212,7 @@ body {
 
 .subhead {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 16px;
   margin: 16px 0 8px;
 }
@@ -214,7 +220,7 @@ body {
 /* -- buttons and fields ---------------------------------------------------- */
 
 .btn {
-  font: 600 14px/1.2 var(--font-body);
+  font: 600 16px/1.2 var(--font-body);
   color: var(--ink);
   background: transparent;
   border: 1.5px solid var(--ink);
@@ -249,7 +255,7 @@ body {
 }
 
 .btn-small {
-  font-size: 12px;
+  font-size: 14px;
   padding: 4px 8px;
 }
 
@@ -276,7 +282,7 @@ body {
 .field input {
   width: 100%;
   min-width: 0;
-  font: 400 14px var(--font-body);
+  font: 400 16px var(--font-body);
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--ink);
@@ -313,7 +319,7 @@ body {
 
 .panel-title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
   margin: 2px 0 6px;
 }
@@ -398,7 +404,7 @@ body {
 
 .sabotage summary {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 16px;
   cursor: pointer;
   margin-bottom: 6px;
@@ -518,7 +524,7 @@ body {
 }
 
 .tab {
-  font: 600 14px/1.2 var(--font-body);
+  font: 600 16px/1.2 var(--font-body);
   color: var(--muted);
   background: none;
   border: 0;
@@ -1010,7 +1016,7 @@ body {
 
 .sen-place {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
   margin: 0;
   flex: 1;
@@ -1201,7 +1207,7 @@ body {
 .sheet-verdict {
   margin-top: 8px;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 20px;
 }
 
@@ -1276,7 +1282,7 @@ body {
 
 .sheet-block h4 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 16px;
   margin: 4px 0 6px;
 }
@@ -1669,4 +1675,175 @@ body {
   * {
     transition: none !important;
   }
+}
+
+/* -- site bar (shared look with Início and Técnico) ------------------------ */
+
+.sitebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sitebar-marca {
+  font-family: 'IM Fell English SC', var(--font-display);
+  font-size: 22px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sitebar-marca span,
+.sitebar-paginas a[aria-current='page'] {
+  color: var(--stamp);
+}
+
+.sitebar-paginas {
+  display: flex;
+  gap: 4px 22px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: 'IM Fell English SC', var(--font-display);
+  font-size: 18px;
+}
+
+.sitebar-paginas a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sitebar-paginas a[aria-current='page'] {
+  border-bottom: 1px solid var(--stamp);
+}
+
+/* -- guided tour ------------------------------------------------------------ */
+
+.roteiro {
+  margin: 16px 16px 0;
+  padding: 14px 18px 16px;
+  border: 1px solid var(--ink);
+  outline: 1px solid var(--rule);
+  outline-offset: 4px;
+  background: color-mix(in srgb, var(--paper) 35%, transparent);
+}
+
+.roteiro-fechado {
+  padding: 8px 12px;
+  border-style: dashed;
+  outline: none;
+  background: transparent;
+}
+
+.roteiro-cab {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.roteiro-rotulo {
+  font-family: 'IM Fell English SC', var(--font-display);
+  font-size: 18px;
+  color: var(--stamp);
+  letter-spacing: 0.04em;
+}
+
+.roteiro-trilha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.roteiro-ponto {
+  font: 500 12px/1 var(--font-mono);
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+
+.roteiro-ponto.ok {
+  border-color: var(--confirma);
+  color: var(--confirma);
+}
+
+.roteiro-ponto.atual {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.roteiro-corpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 32px;
+  margin-top: 10px;
+}
+
+.roteiro-texto {
+  flex: 1 1 32rem;
+  max-width: 68rem;
+}
+
+.roteiro-titulo {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 26px;
+  margin: 0 0 6px;
+}
+
+.roteiro-num {
+  color: var(--stamp);
+}
+
+.roteiro-feito {
+  font-family: 'IM Fell English SC', var(--font-display);
+  font-size: 16px;
+  color: var(--confirma);
+  margin-left: 8px;
+}
+
+.roteiro-faca {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+.roteiro-porque {
+  font-size: 15px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.roteiro-por {
+  font-style: italic;
+  color: var(--ink);
+}
+
+.roteiro-porque a {
+  color: var(--stamp);
+}
+
+.roteiro-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.strip-check {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
 }

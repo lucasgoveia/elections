@@ -3,18 +3,892 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Urna Lab · eg/v1</title>
+    <title>Urna à Prova</title>
+    <meta
+      name="description"
+      content="Uma urna eletrônica em que o eleitor confere o próprio voto, o fiscal confere a seção e qualquer pessoa confere a soma. Explicado para quem não é matemático."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700&family=Public+Sans:wght@400;600&family=Martian+Mono:wght@300;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Courier+Prime:wght@400;700&display=swap"
     />
   </head>
   <body>
-    <div id="root">
-      <p class="boot-loading">Carregando criptografia…</p>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <pattern id="hachura" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+          <line x1="0" y1="0" x2="0" y2="5" style="stroke: var(--hachura)" stroke-width="1.1" />
+        </pattern>
+        <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M1 1 L9 5 L1 9" fill="none" style="stroke: var(--sanguinea)" stroke-width="1.6" stroke-linecap="round" />
+        </marker>
+      </defs>
+    </svg>
+
+    <header class="cabeca">
+      <div class="cabeca-dentro">
+        <a class="marca" href="./">Urna <span>à</span> Prova</a>
+        <nav aria-label="Páginas">
+          <ul class="paginas">
+            <li><a href="./" aria-current="page">Início</a></li>
+            <li><a href="./tecnico.html">Técnico</a></li>
+            <li><a href="./oficina.html">Oficina</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="folio">
+      <!-- ================================================================== -->
+      <section class="abertura">
+        <span class="sobrescrito">Caderno de notas sobre uma urna verificável</span>
+        <h1>Uma urna que qualquer pessoa pode conferir</h1>
+        <p class="lede">
+          Hoje, quem vota confia que a urna registrou, guardou e somou o voto direito. Este caderno descreve uma urna
+          em que cada uma dessas etapas deixa uma prova pública. O eleitor confere o próprio voto, o fiscal confere a
+          seção, e qualquer pessoa confere a soma inteira. Ninguém precisa acreditar na palavra de ninguém, nem na da
+          Justiça Eleitoral.
+        </p>
+        <p>
+          Tudo aqui é explicado sem fórmulas. Quem quiser as fórmulas e as provas encontra na página
+          <a href="./tecnico.html">Técnico</a>. Quem quiser apertar os botões vai à <a href="./oficina.html">Oficina</a>,
+          onde roda uma eleição inteira da República Galáctica no próprio navegador. As dúvidas mais comuns estão no
+          fim desta página, em <a href="#duvidas">Dúvidas frequentes</a>.
+        </p>
+      </section>
+
+      <figure class="tavola desenho" aria-labelledby="tav1-leg">
+        <svg viewBox="0 0 960 300" role="img" aria-label="O caminho de um voto, da urna ao resultado">
+          <!-- a: the voter -->
+          <g transform="translate(40 70)">
+            <circle class="t" cx="40" cy="30" r="17" />
+            <path class="t" d="M40 47 L40 120 M40 66 L14 98 M40 66 L68 92 M40 120 L22 172 M40 120 L58 172" />
+            <path class="t fino" d="M28 26 q4 -3 8 0 M44 26 q4 -3 8 0 M33 38 q7 4 14 0" />
+            <text class="letra" x="34" y="200">a</text>
+          </g>
+          <!-- b: the machine -->
+          <g transform="translate(150 80)">
+            <path class="h" d="M0 0 h130 v120 h-130 z" />
+            <rect class="t papel" x="0" y="0" width="130" height="120" />
+            <rect class="t" x="10" y="12" width="66" height="50" />
+            <path class="t fino" d="M18 26 h40 M18 36 h30 M18 46 h46" />
+            <g class="t fino">
+              <rect x="86" y="12" width="10" height="9" /><rect x="100" y="12" width="10" height="9" /><rect x="114" y="12" width="10" height="9" />
+              <rect x="86" y="25" width="10" height="9" /><rect x="100" y="25" width="10" height="9" /><rect x="114" y="25" width="10" height="9" />
+              <rect x="86" y="38" width="10" height="9" /><rect x="100" y="38" width="10" height="9" /><rect x="114" y="38" width="10" height="9" />
+              <rect x="100" y="51" width="10" height="9" />
+            </g>
+            <path class="t" d="M10 76 h110 v34 h-110 z" />
+            <!-- the lock -->
+            <path class="s" d="M52 92 v-8 a13 13 0 0 1 26 0 v8" />
+            <rect class="s" x="46" y="92" width="38" height="18" />
+            <circle class="cheio" cx="65" cy="100" r="2.6" />
+            <text class="letra" x="58" y="148">b</text>
+          </g>
+          <path class="s tracejado" d="M292 140 C 320 140, 330 140, 352 140" marker-end="url(#seta)" />
+          <!-- c: the slip -->
+          <g transform="translate(150 230)">
+            <path class="t" d="M0 0 h120 v40 h-120 z" />
+            <text class="num" x="9" y="25">K7QD-3XMA-9PRT</text>
+            <text class="letra" x="128" y="28">c</text>
+          </g>
+          <path class="t fino tracejado" d="M215 200 v28" />
+          <!-- d: the board as an open book with a tree -->
+          <g transform="translate(362 60)">
+            <path class="t papel" d="M0 20 q70 -26 140 0 q70 -26 140 0 v150 q-70 -26 -140 0 q-70 -26 -140 0 z" />
+            <path class="t" d="M140 20 v150" />
+            <path class="t fino" d="M18 50 q50 -14 104 0 M18 70 q50 -14 104 0 M18 90 q50 -14 104 0 M18 110 q50 -14 104 0 M18 130 q50 -14 104 0" />
+            <!-- tree on the right page -->
+            <g class="s fino">
+              <path d="M210 44 L178 84 M210 44 L242 84 M178 84 L162 124 M178 84 L194 124 M242 84 L226 124 M242 84 L258 124" />
+            </g>
+            <circle class="cheio" cx="210" cy="44" r="4" />
+            <g class="t fino">
+              <rect x="155" y="124" width="14" height="14" /><rect x="187" y="124" width="14" height="14" />
+              <rect x="219" y="124" width="14" height="14" /><rect x="251" y="124" width="14" height="14" />
+            </g>
+            <text class="letra" x="134" y="204">d</text>
+          </g>
+          <path class="s tracejado" d="M650 140 C 668 140, 676 140, 694 140" marker-end="url(#seta)" />
+          <!-- e: three keys -->
+          <g transform="translate(704 64)">
+            <g class="t">
+              <circle cx="16" cy="16" r="11" /><path d="M27 16 h44 M60 16 v9 M68 16 v7" />
+              <circle cx="16" cy="56" r="11" /><path d="M27 56 h44 M60 56 v9 M68 56 v7" />
+            </g>
+            <g class="t" opacity="0.4">
+              <circle cx="16" cy="96" r="11" /><path d="M27 96 h44 M60 96 v9 M68 96 v7" />
+            </g>
+            <text class="rot" x="0" y="134">dois de três</text>
+            <text class="letra" x="38" y="166">e</text>
+          </g>
+          <path class="s tracejado" d="M790 140 C 808 140, 812 140, 826 140" marker-end="url(#seta)" />
+          <!-- f: balance -->
+          <g transform="translate(836 60)">
+            <path class="t" d="M50 10 v140 M24 150 h52 M8 40 h84" />
+            <path class="t fino" d="M8 40 l-8 40 M8 40 l8 40 M92 40 l-8 40 M92 40 l8 40" />
+            <path class="t" d="M-4 80 q12 12 24 0 z M80 80 q12 12 24 0 z" />
+            <circle class="cheio-tinta" cx="50" cy="10" r="3" />
+            <text class="letra" x="44" y="186">f</text>
+          </g>
+        </svg>
+        <figcaption id="tav1-leg">
+          <b>Tav. I.</b> O caminho de um voto.
+          <ul class="legenda">
+            <li><i>a</i> O eleitor escolhe na urna, sozinho na cabine.</li>
+            <li><i>b</i> A urna tranca o voto numa caixa que ninguém abre sozinho.</li>
+            <li><i>c</i> O eleitor leva um código. O código não diz em quem votou.</li>
+            <li><i>d</i> A caixa vai para um mural público, que todos podem copiar.</li>
+            <li><i>e</i> Só a soma das caixas é aberta, e só com dois de três guardiões.</li>
+            <li><i>f</i> Qualquer pessoa refaz a conta e compara com o resultado.</li>
+          </ul>
+        </figcaption>
+      </figure>
+
+      <h2>Três perguntas que todo eleitor tem</h2>
+      <p>
+        Uma eleição pode dar errado em três lugares. A urna pode gravar algo diferente do que o eleitor escolheu. O
+        voto gravado pode sumir ou mudar no caminho. E a soma pode estar errada. A urna deste caderno responde a cada
+        pergunta com uma prova que alguém, fora da Justiça Eleitoral, consegue checar.
+      </p>
+      <ul class="promessas">
+        <li>
+          <span class="quem">Quem confere: o eleitor</span>
+          <h3>A urna gravou o que eu escolhi?</h3>
+          <p>O eleitor pode pedir para a urna mostrar o que trancou na caixa, antes de depositar. Capítulo IV.</p>
+        </li>
+        <li>
+          <span class="quem">Quem confere: o eleitor</span>
+          <h3>Meu voto chegou intacto?</h3>
+          <p>O código do comprovante aparece no mural público, igual, para sempre. Capítulos V e VI.</p>
+        </li>
+        <li>
+          <span class="quem">Quem confere: qualquer pessoa</span>
+          <h3>A soma está certa?</h3>
+          <p>Cada passo da apuração vem com uma prova matemática que qualquer computador confere. Capítulos I, III e IX.</p>
+        </li>
+      </ul>
+
+      <aside class="nota" style="margin-top: 1.6em">
+        <span class="marcador">O que a urna de hoje já faz</span>
+        A urna brasileira já imprime a zerésima e o boletim de urna, passa por testes públicos de segurança e por
+        votação paralela no dia. O que falta é uma prova que o próprio eleitor possa conferir.
+      </aside>
+      <h2 style="margin-top: 56px">Sumário</h2>
+      <ol class="sumario">
+        <li><span class="n">I</span><a href="#cap-1">A caixa trancada que soma</a><span class="d">como contar votos sem abrir nenhum</span></li>
+        <li><span class="n">II</span><a href="#cap-2">A chave repartida</a><span class="d">por que ninguém sozinho consegue abrir</span></li>
+        <li><span class="n">III</span><a href="#cap-3">Provar sem mostrar</a><span class="d">como garantir que cada caixa tem um voto só</span></li>
+        <li><span class="n">IV</span><a href="#cap-4">Testar ou depositar</a><span class="d">como pegar uma urna que troca votos</span></li>
+        <li><span class="n">V</span><a href="#cap-5">O código de rastreamento</a><span class="d">um colar em que nenhuma conta pode sair</span></li>
+        <li><span class="n">VI</span><a href="#cap-6">O mural público</a><span class="d">um livro que não se pode rasgar</span></li>
+        <li><span class="n">VII</span><a href="#cap-7">Os papéis da seção</a><span class="d">zerésima, pré-boletim e boletim de urna</span></li>
+        <li><span class="n">VIII</span><a href="#cap-8">O embaralhador</a><span class="d">desfazer a ordem em que os votos chegaram</span></li>
+        <li><span class="n">IX</span><a href="#cap-9">O verificador</a><span class="d">dezesseis conferências que qualquer um roda</span></li>
+        <li><span class="n">X</span><a href="#problemas">Onde ainda há problemas</a><span class="d">o que esta urna não resolve</span></li>
+        <li><span class="n">?</span><a href="#duvidas">Dúvidas frequentes</a><span class="d">respostas curtas</span></li>
+      </ol>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-1" aria-labelledby="cap-1-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">I</span>
+          <h2 id="cap-1-t">A caixa trancada que soma</h2>
+          <p class="pergunta">Como contar votos sem abrir nenhum?</p>
+        </div>
+
+        <p class="capitular">
+          Imagine que cada voto vai para uma caixinha trancada. Para cada candidato, a caixa guarda um número: 1 se o
+          eleitor votou nele, 0 se não votou. Quem olha a caixa por fora vê só um amontoado de números que parecem
+          sorteados. Uma caixa com 1 e uma caixa com 0 parecem iguais.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Cifra de ElGamal exponencial. A propriedade de somar fechado se chama <em>homomorfismo</em>.
+        </aside>
+        <p>
+          Essas caixas têm uma propriedade rara. Dá para juntar duas caixas trancadas e obter uma terceira caixa,
+          também trancada, que guarda a <em>soma</em> das duas. Ninguém precisou abrir nada. Juntando as caixas de
+          todos os eleitores de uma seção, sai uma única caixa com o total de votos de cada candidato.
+        </p>
+        <p>
+          No fim do dia, abre-se só essa caixa do total. Os votos individuais nunca são abertos. A urna também não guarda
+          nenhuma contagem por candidato: ela nem sabe, depois que o eleitor sai, quantos votos cada um teve.
+        </p>
+
+        <div class="brinquedo" id="toy-somar">
+          <h4>Experimente: somar sem abrir</h4>
+          <p class="instr">
+            Vote algumas vezes. Cada voto vira uma caixa com dois números que parecem aleatórios. Depois, junte as
+            caixas e abra só o total. As contas são de verdade, com números pequenos.
+          </p>
+          <div class="fila">
+            <button type="button" class="botao" data-voto="1">Votar em Luke</button>
+            <button type="button" class="botao" data-voto="0">Votar em Vader</button>
+            <button type="button" class="botao botao-forte" data-acao="somar" disabled>Juntar e abrir o total</button>
+            <button type="button" class="botao" data-acao="limpar">Recomeçar</button>
+          </div>
+          <ul class="caixas" aria-live="polite"></ul>
+          <p class="saida mono" data-saida aria-live="polite">Nenhuma caixa ainda.</p>
+        </div>
+
+        <p>
+          Se o total só sai quando alguém abre, quem tem a chave? Se fosse uma pessoa só, ela poderia abrir cada caixa
+          individual e ver o voto de cada eleitor. O próximo capítulo resolve isso.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-2" aria-labelledby="cap-2-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">II</span>
+          <h2 id="cap-2-t">A chave repartida</h2>
+          <p class="pergunta">Por que ninguém sozinho consegue abrir?</p>
+        </div>
+
+        <p class="capitular">
+          A chave que abre as caixas nunca existe inteira em lugar nenhum. Ela nasce repartida entre alguns
+          <em>guardiões</em>, que são organizações diferentes. Na eleição de exemplo são três: o Conselho Jedi, a Aliança
+          Rebelde e o Clã Bancário Intergaláctico. Num caso real seriam, por exemplo, o TSE, a OAB, uma universidade e
+          partidos de lados opostos.
+        </p>
+        <aside class="nota">
+          <span class="marcador">A regra dos blocos</span>
+          Cada guardião declara um bloco (TSE, partido, universidade). Nenhum bloco pode ter pedaços suficientes para
+          abrir sozinho. A regra está no manifesto, e o verificador a confere.
+        </aside>
+        <p>
+          A regra é "dois de três": quaisquer dois guardiões, juntos, conseguem abrir uma caixa. Um sozinho não
+          consegue nada, nem adivinhar. A ideia vem de um fato que se aprende na escola: por dois pontos passa uma
+          única reta, mas por um ponto passam infinitas.
+        </p>
+        <p>
+          Escondemos o segredo como a altura em que uma reta corta o eixo vertical. Cada guardião recebe um ponto
+          dessa reta. Com dois pontos, desenha-se a reta e lê-se o segredo. Com um ponto só, qualquer altura é possível,
+          e todas com a mesma chance.
+        </p>
+
+        <div class="brinquedo" id="toy-reta">
+          <h4>Experimente: a reta escondida</h4>
+          <p class="instr">Escolha quais guardiões aparecem. Com um só, veja quantas retas cabem. Com dois, a reta aparece.</p>
+          <div class="fila" role="group" aria-label="Guardiões presentes">
+            <button type="button" class="botao" data-g="1" aria-pressed="true">Conselho Jedi</button>
+            <button type="button" class="botao" data-g="2" aria-pressed="false">Aliança Rebelde</button>
+            <button type="button" class="botao" data-g="3" aria-pressed="false">Clã Bancário</button>
+            <button type="button" class="botao" data-acao="nova">Sortear outra reta</button>
+          </div>
+          <svg class="desenho" viewBox="0 0 520 300" role="img" aria-label="Gráfico da reta e dos pontos dos guardiões" data-plot></svg>
+          <p class="saida" data-saida aria-live="polite"></p>
+        </div>
+
+        <p>
+          E quem inventou a reta? Ninguém. Cada guardião sorteia a sua própria reta secreta e manda um ponto dela, em
+          envelope lacrado, a cada um dos outros. A reta da eleição é a soma de todas. Para descobri-la, seria preciso
+          que todos os guardiões revelassem as suas. Isto se chama <em>cerimônia de chaves</em>, e tudo o que os
+          guardiões publicam nela vai para o mural, com provas de que ninguém trapaceou.
+        </p>
+        <p>
+          Os guardiões também nunca juntam os pedaços num lugar só. Cada um aplica o seu pedaço à caixa do total, em
+          casa, e publica o resultado parcial com uma prova de que usou o pedaço certo. Juntar os resultados parciais
+          revela o total. A chave inteira continua sem existir.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-3" aria-labelledby="cap-3-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">III</span>
+          <h2 id="cap-3-t">Provar sem mostrar</h2>
+          <p class="pergunta">Como garantir que cada caixa tem um voto só?</p>
+        </div>
+
+        <p class="capitular">
+          As caixas trancadas trazem um perigo. Se ninguém vê o que tem dentro, uma urna desonesta poderia trancar o
+          número 500 numa caixa do Vader. Ao somar, o Vader ganharia 500 votos de uma vez, e ninguém perceberia.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Prova de conhecimento zero. A desta caixa é a disjuntiva de Cramer, Damgård e Schoenmakers (1994).
+        </aside>
+        <p>
+          Por isso, cada caixa vem acompanhada de uma <em>prova</em> de que guarda 0 ou 1, e de que, somando as
+          caixas de um cargo, o eleitor escolheu exatamente o que podia escolher. A prova não diz se é 0 ou 1. Ela só
+          convence de que é um dos dois.
+        </p>
+
+        <figure class="tavola desenho" aria-labelledby="tav2-leg">
+          <svg viewBox="0 0 760 210" role="img" aria-label="O amigo daltônico e as duas bolas">
+            <g transform="translate(30 30)">
+              <circle class="t" cx="40" cy="30" r="17" />
+              <path class="t" d="M40 47 L40 120 M40 66 L80 80 M40 66 L74 100 M40 120 L24 160 M40 120 L56 160" />
+              <circle class="s" cx="96" cy="80" r="12" /><circle class="h" cx="96" cy="80" r="12" />
+              <circle class="t" cx="90" cy="106" r="12" />
+              <text class="letra" x="34" y="182">a</text>
+            </g>
+            <path class="s tracejado" d="M170 110 C 230 80, 270 80, 320 110" marker-end="url(#seta)" />
+            <text class="rot" x="196" y="72">troca ou não troca?</text>
+            <g transform="translate(330 30)">
+              <circle class="t" cx="40" cy="30" r="17" />
+              <path class="t fino" d="M28 26 h8 M44 26 h8" />
+              <path class="t" d="M40 47 L40 120 M40 66 L10 100 M40 66 L70 100 M40 120 L24 160 M40 120 L56 160" />
+              <text class="letra" x="34" y="182">b</text>
+            </g>
+            <path class="s tracejado" d="M440 110 C 490 80, 540 80, 580 110" marker-end="url(#seta)" />
+            <g transform="translate(590 40)">
+              <text class="num" x="0" y="20">rodada 1  acertou</text>
+              <text class="num" x="0" y="44">rodada 2  acertou</text>
+              <text class="num" x="0" y="68">rodada 3  acertou</text>
+              <text class="num" x="0" y="92">  ...</text>
+              <text class="num" x="0" y="116">rodada 20 acertou</text>
+              <text class="letra" x="40" y="160">c</text>
+            </g>
+          </svg>
+          <figcaption id="tav2-leg">
+            <b>Tav. II.</b> Uma prova que não ensina nada. <i>a</i> O amigo daltônico segura uma bola vermelha e uma
+            verde, que para ele são iguais, esconde as mãos e troca ou não as bolas. <i>b</i> Você diz se ele trocou. Se
+            as bolas fossem da mesma cor, você acertaria por sorte metade das vezes. <i>c</i> Depois de vinte acertos
+            seguidos, a chance de sorte é de uma em um milhão. Ele se convence de que as cores são diferentes, e continua
+            sem saber qual é a vermelha.
+          </figcaption>
+        </figure>
+
+        <p>
+          As provas das caixas funcionam assim, só que sem conversa: o desafio é tirado de um embaralhamento
+          matemático (uma função de <em>hash</em>) do próprio voto trancado, de modo que a urna não consegue escolher o
+          desafio a seu favor. O resultado é um punhado de números que qualquer computador confere em milésimos de
+          segundo.
+        </p>
+        <p>
+          O mesmo tipo de prova aparece em todo lugar da apuração. Os guardiões provam que geraram a chave direito.
+          Cada guardião prova que usou o seu pedaço verdadeiro ao abrir o total. O embaralhador prova que não trocou
+          nenhum voto (capítulo VIII). Uma prova que não confere é rejeitada, e quem a assinou fica exposto.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-4" aria-labelledby="cap-4-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">IV</span>
+          <h2 id="cap-4-t">Testar ou depositar</h2>
+          <p class="pergunta">Como pegar uma urna que troca votos?</p>
+        </div>
+
+        <p class="capitular">
+          As provas do capítulo anterior garantem que a caixa tem um voto válido. Elas não garantem que é o voto
+          que <em>você</em> escolheu. Uma urna adulterada poderia trancar Vader quando você digitou Luke, com uma prova
+          perfeita de que a caixa tem um voto só.
+        </p>
+        <p>
+          A defesa é a do cozinheiro que não sabe qual prato o cliente vai provar. Depois que você escolhe, a urna
+          tranca o voto e mostra um código na tela. Só então ela pergunta: <em>depositar ou auditar?</em>
+        </p>
+        <ul>
+          <li><strong>Depositar</strong> (CONFIRMA): o voto vale, a urna apaga o segredo que usou para trancar, e você leva o comprovante com o código.</li>
+          <li>
+            <strong>Auditar</strong> (tecla AUDITAR): a urna é obrigada a mostrar o que trancou e o segredo usado. Esse
+            voto é descartado, nunca é contado, e você vota de novo. O recibo de auditoria vai para casa com você.
+          </li>
+        </ul>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Desafio de Benaloh (2006). O compromisso da urna é o código: ele já está fixado antes da pergunta.
+        </aside>
+        <p>
+          A urna precisa trancar o voto antes de saber se você vai auditar. Se trapacear, arrisca ser pega toda vez
+          que alguém audita. Com o recibo, qualquer celular ou computador refaz a caixa a partir do segredo revelado e
+          confere se ela é igual à que está no mural. A própria urna nunca pode ser quem diz "está tudo certo", porque
+          uma urna desonesta diria isso de qualquer jeito.
+        </p>
+
+        <div class="brinquedo" id="toy-benaloh">
+          <h4>Experimente: a chance de escapar</h4>
+          <p class="instr">Uma urna troca alguns votos. Cada eleitor audita com uma certa chance. Qual a chance de nenhuma troca ser auditada?</p>
+          <div class="grade-2">
+            <label class="campo" for="b-k">
+              <span>Votos trocados pela urna</span>
+              <input id="b-k" type="range" min="1" max="200" value="20" />
+              <output for="b-k" data-k>20</output>
+            </label>
+            <label class="campo" for="b-p">
+              <span>Eleitores que auditam</span>
+              <input id="b-p" type="range" min="1" max="20" value="5" />
+              <output for="b-p" data-p>5%</output>
+            </label>
+          </div>
+          <p class="saida" data-saida aria-live="polite"></p>
+        </div>
+
+        <p>
+          Há um custo: o voto auditado se torna público, e ele fica no mural logo antes do voto que você depositou
+          depois. Quem souber que você demorou na cabine pode adivinhar seu voto. Por isso, as auditorias devem ser
+          feitas de preferência por fiscais, em sessões só de teste ao longo do dia. A seção <a href="#problemas">Onde
+          ainda há problemas</a> volta a isso.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-5" aria-labelledby="cap-5-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">V</span>
+          <h2 id="cap-5-t">O código de rastreamento</h2>
+          <p class="pergunta">Um colar em que nenhuma conta pode sair.</p>
+        </div>
+
+        <p class="capitular">
+          O código que você leva no comprovante, algo como <code>K7QD-3XMA-9PRT-2BHW-6YCN</code>, é uma impressão
+          digital da sua caixa trancada. Ele não diz em quem você votou. Serve para você procurar a sua caixa no mural
+          e ver que ela está lá, igual.
+        </p>
+        <p>
+          Há um detalhe: cada código é calculado a partir da caixa <em>e do código anterior</em> da mesma urna. Os
+          votos da urna formam um colar. Tirar uma conta do meio, trocar a ordem ou mexer em uma caixa muda todos os
+          códigos que vêm depois, e os eleitores que já levaram os seus comprovantes notam a diferença.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Cadeia de hashes com SHA-256. É a mesma ideia que impede alterar o passado de um registro de blocos.
+        </aside>
+
+        <div class="brinquedo" id="toy-corrente">
+          <h4>Experimente: mexa numa caixa do meio</h4>
+          <p class="instr">Cada linha é um voto trancado (aqui escrito às claras para facilitar). Mude o segundo e veja os códigos.</p>
+          <ol class="corrente"></ol>
+        </div>
+
+        <p>
+          Como cada código depende de tudo o que veio antes na mesma urna, dois eleitores nunca recebem o mesmo código.
+          Isso fecha uma trapaça esperta: a urna dar a dois eleitores com o mesmo voto a mesma caixa, e usar a caixa
+          que sobrou para um voto inventado.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-6" aria-labelledby="cap-6-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">VI</span>
+          <h2 id="cap-6-t">O mural público</h2>
+          <p class="pergunta">Um livro que não se pode rasgar.</p>
+        </div>
+
+        <p class="capitular">
+          Tudo o que a eleição produz vai para um mural público: as regras da eleição, a cerimônia de chaves, cada caixa
+          de cada urna, cada prova, cada boletim e o resultado. O mural só aceita acréscimos. Nada pode ser apagado ou
+          trocado.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Árvore de Merkle, no formato do RFC 9162 (o mesmo dos registros de certificados da web).
+        </aside>
+        <p>
+          Quem garante? O mural é organizado como uma árvore genealógica de impressões digitais. Cada folha é uma
+          entrada; cada galho guarda a impressão digital dos dois galhos de baixo; a raiz, lá em cima, resume o mural
+          inteiro em 32 letras e números. O mural assina essa raiz com data e tamanho.
+        </p>
+
+        <figure class="tavola desenho" aria-labelledby="tav3-leg">
+          <svg viewBox="0 0 760 230" role="img" aria-label="Árvore de impressões digitais do mural">
+            <g class="s">
+              <path d="M380 34 L220 94 M380 34 L540 94 M220 94 L140 154 M220 94 L300 154 M540 94 L460 154 M540 94 L620 154" />
+            </g>
+            <path class="s" d="M300 154 L220 94 L380 34" style="stroke-width: 4" opacity="0.4" />
+            <circle class="cheio" cx="380" cy="34" r="6" />
+            <g class="t papel">
+              <rect x="200" y="84" width="40" height="20" /><rect x="520" y="84" width="40" height="20" />
+            </g>
+            <g class="t">
+              <rect x="114" y="154" width="52" height="40" /><rect x="274" y="154" width="52" height="40" />
+              <rect x="434" y="154" width="52" height="40" /><rect x="594" y="154" width="52" height="40" />
+            </g>
+            <rect class="h" x="274" y="154" width="52" height="40" />
+            <text class="rot" x="400" y="30">raiz assinada</text>
+            <text class="num" x="120" y="214">manifesto</text>
+            <text class="num" x="276" y="214">sua caixa</text>
+            <text class="num" x="440" y="214">pacote</text>
+            <text class="num" x="598" y="214">resultado</text>
+            <text class="letra" x="248" y="138">a</text>
+            <text class="letra" x="566" y="80">b</text>
+          </svg>
+          <figcaption id="tav3-leg">
+            <b>Tav. III.</b> A árvore do mural. <i>a</i> Para provar que a sua caixa está no mural, basta o caminho da
+            folha até a raiz: um punhado de impressões digitais, mesmo que o mural tenha milhões de entradas. <i>b</i>
+            Mudar qualquer folha muda a raiz. Duas raízes assinadas para o mesmo tamanho de mural são prova de que ele
+            mostrou versões diferentes a pessoas diferentes.
+          </figcaption>
+        </figure>
+
+        <p>
+          Isso protege contra um mural desonesto que mostra uma versão a você e outra ao fiscal. Por isso existem
+          <em>espelhos</em>: cópias do mural mantidas por quem não é a Justiça Eleitoral, como partidos e universidades.
+          Os espelhos comparam as raízes assinadas. O aplicativo de conferência do eleitor confere a raiz com pelo menos
+          um espelho independente.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-7" aria-labelledby="cap-7-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">VII</span>
+          <h2 id="cap-7-t">Os papéis da seção</h2>
+          <p class="pergunta">Zerésima, pré-boletim e boletim de urna.</p>
+        </div>
+
+        <p class="capitular">
+          Os brasileiros já conhecem dois papéis da seção eleitoral: a <em>zerésima</em>, impressa antes do primeiro
+          voto para mostrar que a urna está vazia, e o <em>boletim de urna</em> (BU), impresso no fim com os votos de
+          cada candidato. A urna deste caderno mantém os dois, com uma diferença.
+        </p>
+        <dl>
+          <dt><strong>Zerésima</strong>, de manhã</dt>
+          <dd>
+            Mostra a urna, a seção, o programa que está rodando e um número de abertura. Mesários e fiscais assinam e
+            guardam uma cópia. Ela prova que a urna começou vazia, e é o primeiro elo do colar do capítulo V.
+          </dd>
+          <dt><strong>Pré-boletim</strong>, no fim da votação</dt>
+          <dd>
+            A urna não sabe quantos votos cada candidato teve, porque os votos estão trancados. Então ela imprime o
+            número de eleitores que assinaram o caderno de votação, quantas cédulas foram depositadas e auditadas, e uma
+            impressão digital da soma trancada. Fiscais assinam e guardam cópia <em>antes</em> do envio.
+          </dd>
+          <dt><strong>Boletim de urna</strong>, depois da apuração</dt>
+          <dd>
+            Os guardiões abrem a soma trancada daquela seção. O BU traz os votos de cada candidato, brancos e nulos, e
+            a mesma impressão digital do pré-boletim. O fiscal compara as duas com o papel que guardou.
+          </dd>
+        </dl>
+        <aside class="nota">
+          <span class="marcador">Seções pequenas</span>
+          Uma seção com poucos eleitores revelaria demais. Ela é somada a um grupo maior antes de ser aberta.
+        </aside>
+        <p>
+          O pré-boletim fecha uma brecha antiga: depois que o fiscal tem a impressão digital no papel, ninguém pode
+          trocar o pacote da urna no caminho até o mural sem que a diferença apareça. E uma seção que abriu de manhã e
+          não mandou pacote fica listada como ausente.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-8" aria-labelledby="cap-8-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">VIII</span>
+          <h2 id="cap-8-t">O embaralhador</h2>
+          <p class="pergunta">Desfazer a ordem em que os votos chegaram.</p>
+        </div>
+
+        <p class="capitular">
+          Às vezes não basta somar. Num cargo com muitos candidatos, ou em regras que precisam ver cada cédula
+          inteira, os votos têm de ser abertos um por um. Abrir na ordem em que chegaram seria revelar quem votou em
+          quem, porque a ordem do mural segue a fila da seção.
+        </p>
+        <p>
+          A solução é embaralhar antes de abrir, como um maço de cartas que passa de mão em mão. Cada guardião
+          embaralha o maço inteiro e troca a "tranca" de cada caixa por outra, de modo que ninguém reconheça a caixa
+          depois. Basta que <em>um</em> dos embaralhadores seja honesto para que a ordem final não tenha relação com a
+          fila.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Nome técnico</span>
+          Rede de mistura (mixnet) com prova de embaralhamento de Terelius e Wikström (2010).
+        </aside>
+        <p>
+          E se um embaralhador trocar uma carta por outra, em vez de só embaralhar? Cada um publica uma prova de que a
+          saída é exatamente a entrada em outra ordem, sem nenhuma caixa nova e sem nenhuma a menos. A prova não revela
+          a ordem.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="cap-9" aria-labelledby="cap-9-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">IX</span>
+          <h2 id="cap-9-t">O verificador</h2>
+          <p class="pergunta">Dezesseis conferências que qualquer um roda.</p>
+        </div>
+
+        <p class="capitular">
+          No fim, qualquer pessoa pode baixar o mural inteiro e rodar um programa verificador. Ele não precisa de
+          senha nem de chave. Refaz cada conta e cada prova a partir do que está publicado, em dezesseis passos: confere
+          a árvore do mural, as regras, a cerimônia de chaves, cada pacote de cada urna, se faltou alguma seção, cada
+          voto auditado, cada soma, cada embaralhamento, cada abertura, cada boletim, a contagem, a distribuição de
+          cadeiras e o resultado final.
+        </p>
+        <p>
+          O último passo é diferente: um relatório de <em>independência</em>. Ele lista quem são os guardiões e de que
+          bloco, quais espelhos existem, e quais seções não tiveram nenhum fiscal assinando a zerésima ou o pré-boletim.
+          Ou seja, ele diz em voz alta o que ainda depende da palavra da Justiça Eleitoral.
+        </p>
+        <aside class="nota">
+          <span class="marcador">Quem escreve o verificador</span>
+          A especificação pede que o verificador seja escrito por terceiros a partir do texto, sem reaproveitar o código
+          de quem produziu a eleição. Este protótipo ainda não cumpre isso por inteiro.
+        </aside>
+        <p>
+          A especificação é pública. Um partido, uma universidade ou um estudante pode escrever o seu próprio
+          verificador, em outra linguagem, e chegar ao mesmo veredito. É isso que tira a necessidade de confiar.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="problemas" aria-labelledby="prob-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">X</span>
+          <h2 id="prob-t">Onde ainda há problemas</h2>
+          <p class="pergunta">O que esta urna não resolve, dito com franqueza.</p>
+        </div>
+
+        <p class="capitular">
+          Nenhum sistema de votação é perfeito, e desconfie de quem diz o contrário. Estes são os limites conhecidos
+          desta urna. Os mais graves vêm primeiro.
+        </p>
+
+        <ul class="problemas">
+          <li>
+            <h4>A urna vê o seu voto enquanto você escolhe</h4>
+            <p>
+              Toda urna eletrônica presencial vê a escolha na hora em que ela é digitada. Uma urna adulterada poderia
+              guardar ou transmitir escondido quem votou em quem. Isso afeta o sigilo, nunca a contagem: uma urna que
+              mexe na contagem é pega pelas auditorias e provas.
+            </p>
+            <p class="defesa">
+              Defesas: programa que qualquer um recompila e confere, assinado por gente de fora da Justiça Eleitoral;
+              atestação do equipamento; sorteio público de urnas para perícia depois da eleição.
+            </p>
+          </li>
+          <li>
+            <h4>Se dois guardiões se juntarem, o sigilo acaba</h4>
+            <p>
+              Com a regra "dois de três", dois guardiões mal-intencionados juntos podem abrir caixas individuais. A
+              contagem continua conferível, mas o sigilo do voto depende de os blocos serem de fato adversários.
+            </p>
+            <p class="defesa">Defesas: mais guardiões, de blocos que não se aliam; o verificador publica quem é cada um.</p>
+          </li>
+          <li>
+            <h4>As auditorias só funcionam se alguém auditar</h4>
+            <p>
+              Uma urna que troca votos só é pega se eleitores ou fiscais auditarem e conferirem os recibos num aparelho
+              independente. Se ninguém fizer isso, a troca passa. O verificador público sozinho não percebe: o voto
+              trocado tem uma prova válida.
+            </p>
+            <p class="defesa">Defesas: sessões de auditoria dos fiscais o dia todo, e pedidos de auditoria sorteados entre eleitores.</p>
+          </li>
+          <li>
+            <h4>O voto auditado fica público</h4>
+            <p>
+              Quem audita revela aquela escolha, e ela fica no mural logo antes do voto que a pessoa depositou. Se
+              alguém observar quem demorou na cabine, pode adivinhar.
+            </p>
+            <p class="defesa">Defesa: preferir auditorias feitas por fiscais, sem eleitor real envolvido.</p>
+          </li>
+          <li>
+            <h4>Uma urna desonesta pode escolher mal seus números secretos</h4>
+            <p>
+              Para trancar, a urna sorteia números. Uma urna adulterada poderia "sortear" números combinados com alguém
+              de fora, que depois abriria as caixas. A auditoria não detecta isso.
+            </p>
+            <p class="defesa">Defesas: gerador de números aleatórios certificado e atestado; numa versão futura, sorteio feito junto com outro aparelho.</p>
+          </li>
+          <li>
+            <h4>Cada seção precisa de pelo menos uma pessoa honesta olhando</h4>
+            <p>
+              A zerésima e o pré-boletim só protegem se um mesário ou fiscal honesto conferir e guardar a cópia. Uma seção
+              em que todos estão combinados com a Justiça Eleitoral, e sem fiscal de partido, pode inventar comparecimento
+              até o número de eleitores inscritos.
+            </p>
+            <p class="defesa">Defesa: o verificador lista as seções sem assinatura de fiscal, para que todos vejam onde olhar.</p>
+          </li>
+          <li>
+            <h4>Computadores quânticos</h4>
+            <p>
+              Um computador quântico grande, se um dia existir, poderia abrir todas as caixas já publicadas, revelando
+              votos do passado. A contagem já conferida continua correta, mas o sigilo não teria proteção eterna.
+            </p>
+          </li>
+          <li>
+            <h4>Votos raros podem ser reconhecidos</h4>
+            <p>
+              Quando os votos são abertos um por um depois do embaralhamento, alguém poderia exigir de um eleitor uma
+              combinação incomum de escolhas e procurá-la na lista. Por isso cada cédula embaralhada deve ter poucas
+              escolhas.
+            </p>
+          </li>
+          <li>
+            <h4>Este é um protótipo de pesquisa</h4>
+            <p>
+              O código ainda não passou por auditoria externa. O verificador reaproveita partes do código que produz a
+              eleição, contra o que a especificação pede. Há lacunas anotadas na própria especificação, como o que fazer
+              com uma gravação danificada no meio do diário da urna. Nada disto deve ser usado numa eleição de verdade
+              sem muito mais revisão.
+            </p>
+          </li>
+        </ul>
+        <p>
+          A página <a href="./tecnico.html#limites">Técnico</a> traz cada um desses limites com a referência exata da
+          especificação.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="duvidas" aria-labelledby="duv-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">?</span>
+          <h2 id="duv-t">Dúvidas frequentes</h2>
+        </div>
+
+        <div class="duvidas">
+          <details>
+            <summary>Com o código do comprovante, alguém descobre em quem eu votei?</summary>
+            <div class="resposta">
+              <p>
+                Não. O código é a impressão digital de uma caixa trancada. Ele mostra que a sua caixa está no mural, não
+                o que tem dentro. Nem você consegue provar a outra pessoa em quem votou: a urna apaga o segredo que usou
+                para trancar assim que você deposita.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Então dá para vender o voto mostrando o comprovante?</summary>
+            <div class="resposta">
+              <p>
+                Não. O comprovante não diz o voto, e não há nada que você possa levar da cabine que prove a escolha. O
+                único papel que mostra uma escolha é o recibo de auditoria, e aquele voto foi descartado. Ele não vale
+                nada para um comprador.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Isso é o voto impresso?</summary>
+            <div class="resposta">
+              <p>
+                Não. O voto impresso coloca uma cópia em papel numa urna física, para recontagem manual. Aqui a prova é
+                matemática e pública: o eleitor confere o próprio voto no mural, e qualquer pessoa refaz a soma num
+                computador. Uma coisa não impede a outra, mas são ideias diferentes.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>O TSE consegue mudar o resultado?</summary>
+            <div class="resposta">
+              <p>
+                Não sem ser pego. O resultado é recalculado por qualquer verificador a partir do mural, e os espelhos
+                independentes impedem que o mural mostre versões diferentes. A chave das caixas está com guardiões de
+                vários blocos, e nenhum bloco abre nada sozinho. A assinatura da Justiça Eleitoral no resultado é uma
+                conveniência; o verificador a ignora.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>E se um guardião sumir ou se recusar a abrir?</summary>
+            <div class="resposta">
+              <p>
+                Com a regra "dois de três", um guardião pode faltar e a apuração segue. Se faltarem mais do que isso, a
+                apuração para. Ela não é falsificada, só atrasa. Na escolha do número de guardiões, há um equilíbrio
+                entre resistir a faltas e resistir a conluios.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Um guardião pode abrir só o meu voto, e não o total?</summary>
+            <div class="resposta">
+              <p>
+                Sozinho, não. Ele tem só um pedaço da chave. E os guardiões só aceitam abrir caixas que o próprio mural
+                mostra que são somas de uma seção grande o bastante, ou o resultado de um embaralhamento. Pedir para abrir
+                uma caixa individual fica registrado.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>O que acontece com o voto que eu audito?</summary>
+            <div class="resposta">
+              <p>
+                Ele é descartado e nunca é contado. A urna revela o que trancou e você vota de novo, normalmente. O recibo
+                de auditoria pode ir para casa e ser conferido num celular ou computador. Lembre que a escolha auditada
+                fica pública.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Eu preciso entender matemática para conferir?</summary>
+            <div class="resposta">
+              <p>
+                Não. Você digita o código do comprovante num aplicativo de conferência, de preferência feito por um
+                partido ou universidade, e ele diz se a sua caixa está no mural. A matemática fica com os programas
+                verificadores, que qualquer pessoa pode rodar ou escrever.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Como ficam os votos brancos e nulos?</summary>
+            <div class="resposta">
+              <p>
+                São opções da cédula como qualquer outra, trancadas da mesma forma e contadas à parte. Como manda a
+                lei brasileira, nenhum dos dois entra nos votos válidos. Para presidente, ganha no primeiro turno quem
+                passar de metade dos válidos. A <a href="./oficina.html">Oficina</a> aplica essa regra.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Isso já foi usado em alguma eleição?</summary>
+            <div class="resposta">
+              <p>
+                As ideias, sim. O Helios, de 2008, usa caixas que somam e provas como as daqui em eleições de
+                universidades e associações. O ElectionGuard, da Microsoft, foi usado em eleições-piloto nos Estados Unidos.
+                Esta urna em particular é um protótipo de pesquisa, adaptado às regras brasileiras, e nunca foi usada numa
+                eleição real.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>A apuração demora mais?</summary>
+            <div class="resposta">
+              <p>
+                Um pouco. As somas de cada seção podem ser abertas na noite da eleição, assim que os pacotes chegam. O
+                que custa mais é gerar e conferir as provas: na Oficina, uma eleição de dez planetas é apurada e
+                verificada em segundos, mas uma eleição nacional, com centenas de milhares de seções, exige
+                computadores dedicados e provas agrupadas.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>E se faltar luz ou a urna quebrar no meio da votação?</summary>
+            <div class="resposta">
+              <p>
+                A urna grava um diário encadeado, como o colar do capítulo V, em duas mídias. Ao religar, ela relê o
+                diário e continua de onde parou. Se a urna quebrar de vez, uma urna de reserva assume a seção, e os votos
+                da urna quebrada são recuperados da mídia e importados no pré-boletim da reserva.
+              </p>
+            </div>
+          </details>
+          <details>
+            <summary>Por que Star Wars?</summary>
+            <div class="resposta">
+              <p>
+                Para ninguém confundir um exemplo com uma opinião política. A eleição da República Galáctica segue as
+                regras brasileiras (presidente com segundo turno, duas vagas de senador por planeta), sem ofender
+                ninguém da nossa galáxia.
+              </p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <nav class="convite" aria-label="Continuar">
+        <a class="cartao" href="./tecnico.html">
+          <h3>Técnico</h3>
+          <p>As mesmas ideias com definições, contas feitas à mão com números pequenos e as provas de por que funcionam.</p>
+        </a>
+        <a class="cartao" href="./oficina.html">
+          <h3>Oficina</h3>
+          <p>Uma eleição inteira no seu navegador, com roteiro guiado: vote, audite, apure, sabote e verifique.</p>
+        </a>
+      </nav>
+
+      <footer class="colofao">
+        <span>Protótipo de pesquisa da especificação eg/v1, rascunho 0.4.</span>
+        <span class="espelho" aria-hidden="true">Urna à Prova</span>
+      </footer>
+    </main>
+
+    <script type="module" src="/src/site/inicio.ts"></script>
   </body>
 </html>

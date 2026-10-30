@@ -1,0 +1,1019 @@
+/* Urna à Prova: the reading pages (Início and Técnico).
+ *
+ * Layout: a notebook folio. One text column of about 66 characters, with
+ * notes and small figures hung in the right margin (they fall into the text
+ * on narrow screens). Plates (large figures) span text and margin.
+ */
+
+:root {
+  /* paper and ink, by daylight */
+  --carta: #e6d8b9;          /* aged rag paper */
+  --carta-funda: #dccba6;    /* inset panels, the ledger of a worked example */
+  --tinta: #2b1e13;          /* iron-gall ink */
+  --sepia: #6b5034;          /* faded ink: notes, captions */
+  --sanguinea: #9a3a21;      /* red chalk: drawings, links, emphasis */
+  --verdete: #3f6a4c;        /* verdigris: a check that passed */
+  --regra: rgb(43 30 19 / 0.22);
+  --hachura: rgb(43 30 19 / 0.35);
+  --mancha: rgb(120 82 40 / 0.16); /* foxing at the edges */
+
+  --f-titulo: 'IM Fell English', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --f-versal: 'IM Fell English SC', 'IM Fell English', 'Palatino Linotype', Georgia, serif;
+  --f-texto: 'EB Garamond', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --f-mono: 'Courier Prime', 'Courier New', ui-monospace, monospace;
+
+  --texto: 38rem;
+  --margem: 15.5rem;
+  --vao: 2.5rem;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --carta: #1d1610;
+    --carta-funda: #2a2018;
+    --tinta: #e8d9ba;
+    --sepia: #b59a76;
+    --sanguinea: #db7452;
+    --verdete: #8fbf8f;
+    --regra: rgb(232 217 186 / 0.2);
+    --hachura: rgb(232 217 186 / 0.3);
+    --mancha: rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --carta: #1d1610;
+  --carta-funda: #2a2018;
+  --tinta: #e8d9ba;
+  --sepia: #b59a76;
+  --sanguinea: #db7452;
+  --verdete: #8fbf8f;
+  --regra: rgb(232 217 186 / 0.2);
+  --hachura: rgb(232 217 186 / 0.3);
+  --mancha: rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background-color: var(--carta);
+  /* paper grain, then foxing towards the edges */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 40%, transparent 55%, var(--mancha) 100%);
+  background-attachment: scroll, fixed;
+  color: var(--tinta);
+  font: 400 19px/1.62 var(--f-texto);
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+::selection {
+  background: color-mix(in srgb, var(--sanguinea) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--sanguinea);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--sanguinea);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+code,
+.mono {
+  font-family: var(--f-mono);
+  font-size: 0.86em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+em {
+  font-style: italic;
+}
+
+strong {
+  font-weight: 600;
+}
+
+/* -- the running head ------------------------------------------------------- */
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--carta);
+}
+
+.cabeca {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 5;
+  background: var(--carta);
+  border-bottom: 1px solid var(--regra);
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+}
+
+.cabeca-dentro {
+  max-width: calc(var(--texto) + var(--vao) + var(--margem));
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding-block: 12px;
+}
+
+.marca {
+  font-family: var(--f-versal);
+  font-size: 22px;
+  color: var(--tinta);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.marca span {
+  color: var(--sanguinea);
+}
+
+.paginas {
+  display: flex;
+  gap: 4px 22px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--f-versal);
+  font-size: 18px;
+}
+
+.paginas a {
+  color: var(--tinta);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+.paginas a:hover {
+  color: var(--sanguinea);
+}
+
+.paginas a[aria-current='page'] {
+  color: var(--sanguinea);
+  border-bottom: 1px solid var(--sanguinea);
+}
+
+/* -- the folio ---------------------------------------------------------------- */
+
+.folio {
+  max-width: calc(var(--texto) + var(--vao) + var(--margem));
+  margin: 0 auto;
+  padding-block: 40px 96px;
+}
+
+.folio > * {
+  max-width: var(--texto);
+}
+
+.folio > .tavola,
+.folio > .largo {
+  max-width: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--f-titulo);
+  font-weight: 400;
+  line-height: 1.12;
+  text-wrap: balance;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(38px, 6.4vw, 60px);
+  letter-spacing: -0.005em;
+}
+
+h2 {
+  font-size: clamp(30px, 4.2vw, 40px);
+}
+
+h3 {
+  font-size: 25px;
+}
+
+h4 {
+  font-family: var(--f-versal);
+  font-size: 19px;
+  letter-spacing: 0.04em;
+}
+
+p,
+ul,
+ol,
+dl,
+blockquote {
+  margin: 0 0 0.9em;
+}
+
+li + li {
+  margin-top: 0.3em;
+}
+
+.sobrescrito {
+  font-family: var(--f-versal);
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  color: var(--sanguinea);
+  display: block;
+  margin-bottom: 10px;
+}
+
+.abertura {
+  padding-bottom: 8px;
+}
+
+.abertura h1 {
+  margin-bottom: 22px;
+}
+
+.lede {
+  font-size: 22px;
+  line-height: 1.5;
+}
+
+/* A chapter begins with a large initial, as in a manuscript. */
+.capitular::first-letter {
+  float: left;
+  font-family: var(--f-titulo);
+  font-size: 3.6em;
+  line-height: 0.82;
+  padding: 0.08em 0.1em 0 0;
+  color: var(--sanguinea);
+}
+
+/* -- chapters ----------------------------------------------------------------- */
+
+.capitulo {
+  display: flow-root;
+  margin-top: 72px;
+  padding-top: 28px;
+  border-top: 1px solid var(--regra);
+  max-width: none;
+}
+
+.capitulo > * {
+  max-width: var(--texto);
+}
+
+.capitulo > .tavola,
+.capitulo > .largo {
+  max-width: none;
+}
+
+.capitulo-cab {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 18px;
+  align-items: baseline;
+  margin-bottom: 22px;
+}
+
+.capitulo-num {
+  font-family: var(--f-titulo);
+  font-size: 40px;
+  color: var(--sanguinea);
+  line-height: 1;
+  min-width: 1.6em;
+}
+
+.capitulo-cab .pergunta {
+  grid-column: 2;
+  font-style: italic;
+  color: var(--sepia);
+  margin: 8px 0 0;
+}
+
+h3 {
+  margin: 34px 0 12px;
+}
+
+/* -- margin notes ------------------------------------------------------------- */
+
+.nota {
+  float: right;
+  clear: right;
+  width: var(--margem);
+  margin: 0.3em 0 1em var(--vao);
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--sepia);
+}
+
+.nota b,
+.nota strong {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.nota .marcador {
+  font-family: var(--f-versal);
+  color: var(--sanguinea);
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* -- plates (large figures) ---------------------------------------------------- */
+
+.tavola {
+  margin: 36px 0 32px;
+  clear: both;
+}
+
+.tavola svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.tavola figcaption,
+figure figcaption {
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--sepia);
+  margin-top: 12px;
+  max-width: var(--texto);
+}
+
+.tavola figcaption b,
+figure figcaption b {
+  font-family: var(--f-versal);
+  font-weight: 400;
+  color: var(--sanguinea);
+  letter-spacing: 0.04em;
+}
+
+.legenda {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  columns: 2 16rem;
+  column-gap: 2rem;
+  font-size: 16px;
+  color: var(--sepia);
+}
+
+.legenda li {
+  break-inside: avoid;
+  margin: 0 0 4px;
+}
+
+.legenda i {
+  font-family: var(--f-titulo);
+  color: var(--sanguinea);
+  font-size: 1.1em;
+  margin-right: 4px;
+}
+
+/* SVG ink */
+.desenho {
+  color: var(--tinta);
+}
+
+.desenho .t {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.desenho .s {
+  stroke: var(--sanguinea);
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.desenho .fino {
+  stroke-width: 0.8;
+}
+
+.desenho .tracejado {
+  stroke-dasharray: 4 5;
+}
+
+.desenho .h {
+  fill: url(#hachura);
+  stroke: none;
+}
+
+.desenho .papel {
+  fill: var(--carta);
+}
+
+.desenho .cheio {
+  fill: var(--sanguinea);
+  stroke: none;
+}
+
+.desenho .cheio-tinta {
+  fill: var(--tinta);
+  stroke: none;
+}
+
+.desenho text {
+  fill: var(--tinta);
+  font-family: var(--f-texto);
+  font-size: 15px;
+}
+
+.desenho text.letra {
+  fill: var(--sanguinea);
+  font-family: var(--f-titulo);
+  font-style: italic;
+  font-size: 19px;
+}
+
+.desenho text.rot {
+  fill: var(--sepia);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.desenho text.num {
+  font-family: var(--f-mono);
+  font-size: 12.5px;
+}
+
+/* -- worked examples, proofs, statements ------------------------------------- */
+
+.exemplo {
+  background: var(--carta-funda);
+  border-left: 3px double var(--sanguinea);
+  padding: 16px 20px 6px;
+  margin: 24px 0;
+  font-size: 18px;
+}
+
+.exemplo > .rotulo,
+.prova > .rotulo,
+.enunciado > .rotulo {
+  font-family: var(--f-versal);
+  letter-spacing: 0.05em;
+  color: var(--sanguinea);
+  margin-right: 6px;
+}
+
+.exemplo > .rotulo {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.enunciado {
+  margin: 22px 0;
+  padding: 2px 0 2px 18px;
+  border-left: 1px solid var(--tinta);
+}
+
+.enunciado p:last-child,
+.prova p:last-child,
+.exemplo p:last-child {
+  margin-bottom: 0.9em;
+}
+
+.prova {
+  margin: 0 0 24px;
+}
+
+.prova > .rotulo {
+  font-style: italic;
+  font-family: var(--f-texto);
+  color: var(--tinta);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.prova::after {
+  content: '∎';
+  display: block;
+  text-align: right;
+  color: var(--sanguinea);
+  margin-top: -1.4em;
+}
+
+.katex {
+  font-size: 1.04em;
+}
+
+.katex-display {
+  margin: 0.9em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+
+/* tables of toy numbers */
+.tabela {
+  overflow-x: auto;
+  margin: 18px 0 24px;
+}
+
+.tabela table {
+  border-collapse: collapse;
+  font-size: 16.5px;
+  font-variant-numeric: lining-nums tabular-nums;
+  min-width: 100%;
+}
+
+.tabela th,
+.tabela td {
+  text-align: left;
+  padding: 6px 14px 6px 0;
+  border-bottom: 1px solid var(--regra);
+  vertical-align: top;
+}
+
+.tabela th {
+  font-family: var(--f-versal);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--sepia);
+  border-bottom-color: var(--tinta);
+}
+
+.tabela td.n {
+  font-family: var(--f-mono);
+  font-size: 15px;
+}
+
+/* -- contents ----------------------------------------------------------------- */
+
+.sumario {
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+  border-top: 1px solid var(--tinta);
+}
+
+.sumario li {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  gap: 0 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--regra);
+}
+
+.sumario .n {
+  font-family: var(--f-titulo);
+  color: var(--sanguinea);
+}
+
+.sumario a {
+  color: var(--tinta);
+  text-decoration: none;
+}
+
+.sumario a:hover {
+  color: var(--sanguinea);
+}
+
+.sumario .d {
+  grid-column: 2;
+  font-size: 16px;
+  color: var(--sepia);
+  font-style: italic;
+}
+
+/* -- the three promises ------------------------------------------------------- */
+
+.promessas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 18px 28px;
+  margin: 30px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.promessas li {
+  margin: 0;
+  border-top: 1px solid var(--tinta);
+  padding-top: 10px;
+}
+
+.promessas h3 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.promessas p {
+  font-size: 17px;
+  margin: 0;
+}
+
+.promessas .quem {
+  font-family: var(--f-versal);
+  color: var(--sanguinea);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* -- toys (small interactive figures) ----------------------------------------- */
+
+.brinquedo {
+  margin: 28px 0 30px;
+  padding: 18px 20px 16px;
+  border: 1px solid var(--tinta);
+  outline: 1px solid var(--regra);
+  outline-offset: 4px;
+  background: color-mix(in srgb, var(--carta-funda) 60%, transparent);
+}
+
+.brinquedo > h4 {
+  margin-bottom: 4px;
+}
+
+.brinquedo .instr {
+  font-size: 16px;
+  color: var(--sepia);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.botao {
+  font: 400 17px/1 var(--f-versal);
+  letter-spacing: 0.04em;
+  color: var(--tinta);
+  background: transparent;
+  border: 1px solid var(--tinta);
+  padding: 8px 14px 9px;
+  cursor: pointer;
+  border-radius: 1px;
+}
+
+.botao:hover {
+  background: color-mix(in srgb, var(--tinta) 8%, transparent);
+}
+
+.botao[aria-pressed='true'] {
+  background: var(--tinta);
+  color: var(--carta);
+}
+
+.botao:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.botao-forte {
+  background: var(--sanguinea);
+  border-color: var(--sanguinea);
+  color: var(--carta);
+}
+
+.botao-forte:hover {
+  background: color-mix(in srgb, var(--sanguinea) 85%, var(--tinta));
+}
+
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.campo {
+  display: grid;
+  gap: 4px;
+  font-size: 16px;
+}
+
+.campo input[type='range'] {
+  width: 100%;
+  accent-color: var(--sanguinea);
+}
+
+.campo output {
+  font-family: var(--f-mono);
+  font-size: 15px;
+}
+
+.saida {
+  font-size: 17px;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.saida.mono {
+  font-size: 14.5px;
+  overflow-x: auto;
+}
+
+.ok {
+  color: var(--verdete);
+}
+
+.mau {
+  color: var(--sanguinea);
+}
+
+.caixas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.caixas li {
+  margin: 0;
+  width: 7.4rem;
+  border: 1px solid var(--tinta);
+  padding: 8px 8px 6px;
+  font-family: var(--f-mono);
+  font-size: 13px;
+  line-height: 1.4;
+  background-color: var(--carta);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 6px, var(--regra) 6px 7px);
+}
+
+.caixas li span {
+  display: block;
+  font-family: var(--f-versal);
+  font-size: 13px;
+  color: var(--sepia);
+  letter-spacing: 0.05em;
+}
+
+.corrente {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 8px;
+}
+
+.corrente li {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+  font-size: 16px;
+}
+
+.corrente input {
+  font: inherit;
+  font-size: 16px;
+  color: var(--tinta);
+  background: var(--carta);
+  border: 1px solid var(--regra);
+  border-bottom-color: var(--tinta);
+  padding: 4px 8px;
+  width: 100%;
+}
+
+.corrente .cod {
+  grid-column: 2;
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+  word-break: break-all;
+  transition: color 0.3s;
+}
+
+.corrente .cod.mudou {
+  color: var(--sanguinea);
+}
+
+.grade-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 14px 24px;
+}
+
+/* -- problems ------------------------------------------------------------------ */
+
+.problemas {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+}
+
+.problemas > li {
+  margin: 0 0 22px;
+  padding-left: 30px;
+  position: relative;
+}
+
+.problemas > li::before {
+  content: '✕';
+  position: absolute;
+  left: 2px;
+  top: 1px;
+  color: var(--sanguinea);
+  font-size: 16px;
+}
+
+.problemas h4 {
+  font-family: var(--f-titulo);
+  font-size: 21px;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+
+.problemas p {
+  margin: 0;
+}
+
+.problemas .defesa {
+  font-size: 16.5px;
+  color: var(--sepia);
+  margin-top: 6px;
+}
+
+/* -- FAQ ---------------------------------------------------------------------------- */
+
+.duvidas {
+  margin-top: 18px;
+  border-top: 1px solid var(--tinta);
+}
+
+.duvidas details {
+  border-bottom: 1px solid var(--regra);
+}
+
+.duvidas summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 32px 14px 0;
+  font-family: var(--f-titulo);
+  font-size: 22px;
+  line-height: 1.25;
+  position: relative;
+}
+
+.duvidas summary::-webkit-details-marker {
+  display: none;
+}
+
+.duvidas summary::after {
+  content: '+';
+  position: absolute;
+  right: 4px;
+  top: 12px;
+  font-family: var(--f-texto);
+  color: var(--sanguinea);
+  font-size: 24px;
+  transition: transform 0.2s;
+}
+
+.duvidas details[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.duvidas .resposta {
+  padding: 0 0 14px;
+}
+
+/* -- closing ---------------------------------------------------------------- */
+
+.convite {
+  margin-top: 72px;
+  padding: 26px 0 0;
+  border-top: 3px double var(--tinta);
+  display: grid;
+  gap: 18px 36px;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  max-width: none !important;
+}
+
+.convite a.cartao {
+  color: var(--tinta);
+  text-decoration: none;
+  display: block;
+}
+
+.convite a.cartao h3 {
+  margin: 0 0 6px;
+  color: var(--sanguinea);
+}
+
+.convite a.cartao:hover h3 {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.convite p {
+  margin: 0;
+  font-size: 17px;
+}
+
+.colofao {
+  margin-top: 64px;
+  font-size: 15px;
+  color: var(--sepia);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  max-width: none !important;
+  border-top: 1px solid var(--regra);
+  padding-top: 14px;
+}
+
+/* Leonardo wrote his notebooks right to left, mirrored. */
+.espelho {
+  display: inline-block;
+  transform: scaleX(-1);
+  font-family: var(--f-titulo);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* -- narrow screens ------------------------------------------------------------ */
+
+@media (max-width: 1040px) {
+  .folio {
+    max-width: var(--texto);
+  }
+
+  .nota {
+    float: none;
+    width: auto;
+    margin: 0 0 1.1em;
+    padding: 8px 0 8px 14px;
+    border-left: 1px solid var(--sanguinea);
+  }
+
+  .cabeca-dentro {
+    max-width: var(--texto);
+  }
+}
+
+@media (max-width: 520px) {
+  body {
+    font-size: 18px;
+  }
+
+  .lede {
+    font-size: 20px;
+  }
+
+  .capitulo-num {
+    font-size: 32px;
+  }
+
+  .exemplo {
+    padding: 12px 14px 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

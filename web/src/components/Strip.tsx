@@ -1,5 +1,6 @@
-import { useMemo, type ReactNode } from 'react';
-import type { ElectionDto, ResultDto, SpoilDto, StripData } from '../types';
+import { useMemo, useState, type ReactNode } from 'react';
+import type { ElectionDto, ResultDto, SpoilCheckDto, SpoilDto, StripData } from '../types';
+import { useSim } from '../sim';
 import { groupHex } from '../format';
 import { num, presidencyOf, senatesOf } from '../apuracao';
 import { Head, Row } from './paper';
@@ -81,7 +82,40 @@ function Spoil({ data, election }: { data: SpoilDto; election: ElectionDto }) {
       <div className="strip-foot">
         Confira este recibo de forma independente para ver se a afirmação bate com a cédula.
       </div>
+      <SpoilCheck receiptHex={data.receiptHex} />
     </>
+  );
+}
+
+/** Checks a spoil receipt against the board, as the voter's own device would (§14.2). */
+function SpoilCheck({ receiptHex }: { receiptHex: string }) {
+  const { busy, run } = useSim();
+  const [check, setCheck] = useState<SpoilCheckDto | null>(null);
+  return (
+    <div className="strip-check">
+      <button
+        type="button"
+        className="btn btn-small"
+        disabled={busy !== null}
+        onClick={async () => {
+          const c = await run('Conferindo o recibo…', (sim) => sim.check_spoil(receiptHex));
+          if (c) setCheck(c as SpoilCheckDto);
+        }}
+      >
+        Conferir este recibo de forma independente
+      </button>
+      {check && (
+        <p className={check.ok ? 'check-ok' : 'check-fail'} role="status">
+          {check.ok ? (
+            'Conferência passou: a cédula publicada no mural recifra exatamente como o recibo afirma.'
+          ) : (
+            <>
+              Conferência falhou. <span className="tech-label">detalhe técnico</span> {check.message}
+            </>
+          )}
+        </p>
+      )}
+    </div>
   );
 }
 

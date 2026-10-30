@@ -1,4 +1,28 @@
-# Urna Lab: design brief
+# Urna à Prova: design brief
+
+## The site
+
+Three pages, one notebook. The look is a Renaissance codex in the manner of
+Leonardo's notebooks: aged rag paper, iron-gall ink, figures drawn in red chalk
+(sanguine) with lettered parts (*a*, *b*, *c*) explained in a legend, and notes
+hung in the right margin. Hatching slants the left-handed way. The site name
+appears mirrored once, in the footer.
+
+| Page | File | Job |
+|---|---|---|
+| Início | `index.html`, `src/site/inicio.ts` | Explain every concept to a lay reader, in nine chapters with plates and four small working toys (adding locked boxes, the hidden line, the chance of escaping an audit, the chain of codes); the known problems; the FAQ. |
+| Técnico | `tecnico.html`, `src/site/tecnico.ts` | The same pieces with definitions, toy-group arithmetic (p = 23, order 11) and proofs, typeset with KaTeX. Each section cites SPEC.md. |
+| Oficina | `oficina.html`, `src/main.tsx` | The Urna Lab below, on the same paper, with a 17-step guided tour (`Roteiro.tsx`) that ticks itself off from the simulation state. |
+
+Reading-page tokens (`src/site/site.css`), light and a candle-light dark:
+`--carta` paper, `--carta-funda` inset, `--tinta` ink, `--sepia` faded ink,
+`--sanguinea` red chalk (drawings, links, emphasis), `--verdete` verdigris (a
+check passed). Faces: IM Fell English (titles, small caps for labels), EB
+Garamond (text, old-style figures), Courier Prime (data).
+
+All copy is Brazilian Portuguese.
+
+# Oficina (Urna Lab)
 
 A test bench for the eg/v1 library, running entirely in the browser through
 WebAssembly. One job: run a Brazilian polling day end to end, see every
@@ -13,26 +37,26 @@ cryptographers.
 
 | Token | Hex | Use |
 |---|---|---|
-| `--wall` | `#C9CFC7` | page ground: the pale green-grey of a school classroom, where Brazilians vote |
-| `--slate` | `#24302B` | chalkboard: top rail and the bulletin-board ledger |
+| `--wall` | `#E6D8B9` | page ground: the notebook paper of the whole site |
+| `--slate` | `#2B1E13` | dark ink: top rail and the bulletin-board ledger |
 | `--paper` | `#FBFBF7` | thermal paper, only for printed strips and the audit sheet |
-| `--ink` | `#161A18` | text |
-| `--muted` | `#55605A` | secondary text |
+| `--ink` | `#2B1E13` | text |
+| `--muted` | `#6B5034` | secondary text |
 | `--urna` | `#D8D2C2` | the voting machine body, only inside the urna component |
 | `--lcd` | `#E3E9DF` | the urna screen |
 | `--key` | `#111111` | keypad keys |
 | `--confirma` | `#1F8A3B` | CONFIRMA key, and "check passed" |
 | `--corrige` | `#E86A17` | CORRIGE key |
 | `--branco` | `#F4F4F0` | BRANCO key |
-| `--stamp` | `#B3261E` | failure stamps and failed checks |
+| `--stamp` | `#9A3A21` | failure stamps and failed checks |
 
 Type (Google Fonts, each with a system fallback stack):
-- Display: **Bricolage Grotesque** 700, used sparingly for phase titles and the
-  result numbers.
-- Body: **Public Sans** 400/600. It was designed for government services, which
-  fits.
+- Display: **IM Fell English**, used sparingly for phase titles and the result
+  numbers.
+- Body: **EB Garamond** 400/600, as on the reading pages.
 - Data: **Martian Mono** 300/500 for everything printed (strips, hashes,
-  tracking codes, the urna screen).
+  tracking codes, the urna screen). The urna and the thermal strips keep their
+  modern materials, as objects pasted into the notebook.
 
 Scale: 12 / 14 / 16 / 20 / 28 / 44 px. Radius: 2 px for panels, 6 px for keys.
 No gradients. Shadows only on paper strips (paper lifts off the desk).
@@ -95,23 +119,17 @@ Flow per contest:
 - Mixnet contests (Prefeito): same flow as a single contest. A small tag says
   "counted by mixnet".
 
-After the last contest the screen shows the tracking code large, then:
-"CONFIRMA = cast" and "CORRIGE = audit this ballot (spoil)". A note says this
-step doesn't exist on today's urna.
+After the last contest the screen shows the tracking code large. CONFIRMA casts
+the ballot; the separate blue AUDITAR key spoils it and prints the audit
+receipt. A note says this step doesn't exist on today's urna.
 
 ## Copy
 
-English, with the Brazilian terms kept: zerésima, BU, mesário (poll worker),
-fiscal (observer). Sentence case. Buttons name what they do:
-- Run key ceremony
-- Open polls
-- Open session
-- Authorize voter
-- Close session
-- Close polls
-- Run tally
-- Sign tree head
-- Run verifier
-- Look up my code
+Brazilian Portuguese throughout, with the terms voters know: zerésima, BU,
+mesário, fiscal. Sentence case. Buttons name what they do, for example
+"Realizar cerimônia de chaves", "Abrir votação", "Abrir seção (zerésima)",
+"Identificar eleitor e liberar a urna", "Encerrar seção", "Encerrar votação",
+"Apurar votos", "Rodar verificador", "Consultar meu código". Messages from the
+Rust verifier stay in English, labelled "detalhe técnico".
 
 Errors say what happened and what to do next.
