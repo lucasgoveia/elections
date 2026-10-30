@@ -43,6 +43,12 @@ board        15 board log       Merkle tree, signed tree heads, cutoffs
 mixnet       16 shuffle         re-encrypt and permute, with a proof anyone can check
   │
 result       17 apportionment   from verified totals to seats, with integer-only rules
+  │
+tally        18 tally           judging ballots, adding the locked boxes, the subtotal fingerprint
+journal      19 journal         the machine's hash-chained record, zerésima, pre-BU
+decryption   20 decryption      threshold opening, mixnet counting, final BU, results
+packages     21 packages        what the board accepts, observers, attestations, the freeze
+mixing       22 mixing          mix units, region merging, input lists, the mixer chain
 ```
 
 ## Files
@@ -66,6 +72,13 @@ result       17 apportionment   from verified totals to seats, with integer-only
 | 15 | [Bulletin board log](15-board-log.md) | §17 |
 | 16 | [The mixnet shuffle and its proof](16-shuffle.md) | §19.1 to §19.3, Appendix B |
 | 17 | [Seat apportionment](17-apportionment.md) | §22 |
+| 18 | [Homomorphic tally](18-tally.md) | §12.6, §18 |
+| 19 | [Machine journal and zerésima](19-journal.md) | §15, §16.2 |
+| 20 | [Threshold decryption, mixnet counting and results](20-decryption-results.md) | §16.5, §19.4 to §19.6, §20, §21 |
+| 21 | [Packages and board ingestion](21-packages-ingestion.md) | §16.1, §16.3, §16.4, §17.6, §17.7 |
+| 22 | [Mixnet orchestration](22-mixnet-orchestration.md) | §19.1, §19.2, §23 step 10 |
+
+Files 18 to 22 follow apportionment in the layer order. Each one needs the layers above it: 18 needs ballots (13) and locked boxes (04); 19 needs chains (14) and the tally's imported records (18); 20 needs the tally (18), the shuffle (16) and the seat records (17); 21 needs the journal (19), the manifest (12) and the registry; 22 needs the tally (18) and the shuffle (16).
 
 ## The toy group used throughout
 
