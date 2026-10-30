@@ -1,0 +1,18 @@
+//! Error type for eg/v1 core primitives.
+
+/// Errors produced by the eg/v1 core primitives.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum Error {
+    #[error("cbor: {0}")]
+    Cbor(#[from] crate::cbor::CborError),
+    #[error("not a canonical Ristretto255 point encoding")]
+    InvalidPoint,
+    #[error("scalar encoding is not canonical (>= group order)")]
+    InvalidScalar,
+    #[error("identity element where it is forbidden")]
+    IdentityPoint,
+    #[error("invalid trustee index set")]
+    InvalidIndexSet,
+    #[error("encryption nonce must be nonzero")]
+    ZeroNonce,
+}
