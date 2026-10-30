@@ -15,4 +15,10 @@ pub enum Error {
     InvalidIndexSet,
     #[error("encryption nonce must be nonzero")]
     ZeroNonce,
+    #[error("not a valid Ed25519 public key")]
+    InvalidPublicKey,
+    #[error("signature verification failed")]
+    InvalidSignature,
+    #[error("share decryption failed")]
+    ShareDecryption,
 }

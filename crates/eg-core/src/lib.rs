@@ -6,5 +6,7 @@ pub mod error;
 pub mod group;
 pub mod hash;
 pub mod proofs;
+pub mod share_enc;
+pub mod sign;
 
 pub use error::Error;

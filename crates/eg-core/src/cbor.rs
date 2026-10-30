@@ -572,3 +572,112 @@ mod tests {
         assert_eq!(decode(&too_deep), Err(CborError::TooDeep));
     }
 }
+
+/// Checks that `v` is a record map whose keys are exactly 0..n (n = `n_fields`,
+/// consecutive uints) and whose key 0 is the text `type_tag` (§6.2), and returns
+/// the field values indexed by key. Errors are `CborError::Schema` with a short
+/// message (not a map, wrong type tag, missing key, unknown key).
+pub fn record_fields<'a>(
+    v: &'a Value,
+    type_tag: &str,
+    n_fields: usize,
+) -> Result<Vec<&'a Value>, CborError> {
+    let entries = v.as_map().map_err(|_| schema("record is not a map"))?;
+    let mut fields: Vec<Option<&Value>> = vec![None; n_fields];
+    for (k, val) in entries {
+        let Value::Uint(key) = k else {
+            return Err(schema("record key is not a uint"));
+        };
+        let slot = usize::try_from(*key)
+            .ok()
+            .filter(|&i| i < n_fields)
+            .ok_or_else(|| schema("unknown record key"))?;
+        if fields[slot].replace(val).is_some() {
+            return Err(schema("duplicate record key"));
+        }
+    }
+    let fields: Vec<&Value> = fields
+        .into_iter()
+        .map(|f| f.ok_or_else(|| schema("missing record key")))
+        .collect::<Result<_, _>>()?;
+    if fields[0].as_text() != Ok(type_tag) {
+        return Err(schema("wrong record type tag"));
+    }
+    Ok(fields)
+}
+
+#[cfg(test)]
+mod record_fields_tests {
+    use super::*;
+
+    fn record(tag: &str, extra: Option<(u64, Value)>, skip: Option<u64>) -> Value {
+        let mut entries = vec![
+            (Value::Uint(0), Value::from(tag)),
+            (Value::Uint(1), Value::Uint(5)),
+            (Value::Uint(2), Value::from(vec![0u8])),
+        ];
+        if let Some(k) = skip {
+            entries.retain(|(key, _)| *key != Value::Uint(k));
+        }
+        if let Some((k, v)) = extra {
+            entries.push((Value::Uint(k), v));
+        }
+        Value::Map(entries)
+    }
+
+    #[test]
+    fn accepts_exact_record() {
+        let v = record("t", None, None);
+        let fields = record_fields(&v, "t", 3).unwrap();
+        assert_eq!(fields.len(), 3);
+        assert_eq!(fields[1], &Value::Uint(5));
+        assert_eq!(fields[2], &Value::from(vec![0u8]));
+    }
+
+    #[test]
+    fn rejects_wrong_tag() {
+        let v = record("u", None, None);
+        assert!(matches!(
+            record_fields(&v, "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_missing_key() {
+        let v = record("t", None, Some(2));
+        assert!(matches!(
+            record_fields(&v, "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_extra_key() {
+        let v = record("t", Some((3, Value::Uint(0))), None);
+        assert!(matches!(
+            record_fields(&v, "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_non_uint_key() {
+        let mut v = record("t", None, None);
+        if let Value::Map(entries) = &mut v {
+            entries.push((Value::from("x"), Value::Uint(0)));
+        }
+        assert!(matches!(
+            record_fields(&v, "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_non_map() {
+        assert!(matches!(
+            record_fields(&Value::Uint(0), "t", 3),
+            Err(CborError::Schema(_))
+        ));
+    }
+}

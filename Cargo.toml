@@ -18,3 +18,4 @@ zeroize = "1.8"
 subtle = "2.6"
 thiserror = "2"
 hex = "0.4"
+hpke = { version = "=0.12.0", default-features = false, features = ["alloc", "x25519"] }
