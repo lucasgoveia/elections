@@ -75,7 +75,8 @@
         <li><span class="n">13</span><a href="#t-mixnet">Embaralhamento verificável</a></li>
         <li><span class="n">14</span><a href="#t-resultado">Do total ao eleito</a></li>
         <li><span class="n">15</span><a href="#t-verificador">O verificador</a></li>
-        <li><span class="n">16</span><a href="#limites">Limites e questões em aberto</a></li>
+        <li><span class="n">16</span><a href="#t-software">O programa da urna</a></li>
+        <li><span class="n">17</span><a href="#limites">Limites e questões em aberto</a></li>
       </ol>
 
       <!-- ================================================================== -->
@@ -324,7 +325,7 @@
           Com \(k-1\) guardiões desonestos, as partes deles não dizem nada sobre \(s\) (Proposição 4.2), e o sigilo
           das cédulas se reduz ao Teorema 3.3. Com \(k\) desonestos, as cédulas podem ser decifradas uma a uma, mas
           a contagem continua protegida: uma parte falsa não passa na prova de Chaum-Pedersen. Decifrar não identifica o
-          eleitor; para isso seria preciso também a ordem de votação da seção (seção 16). A regra de blocos do manifesto (§7.2, regra 11) proíbe que um
+          eleitor; para isso seria preciso também a ordem de votação da seção (seção 17). A regra de blocos do manifesto (§7.2, regra 11) proíbe que um
           bloco detenha \(k\) partes.
         </p>
       </section>
@@ -835,16 +836,91 @@
           das cédulas válidas no mural. A correção não depende de confiar em nenhuma das partes envolvidas: guardiões, urnas, mural ou autoridade eleitoral.
         </div>
         <p>
-          O corolário fala das cédulas <em>no mural</em>. Que elas sejam as que os eleitores escolheram depende ainda da
+          O corolário fala das cédulas <em>no mural</em> e vale para qualquer programa de urna (seção 16). Que elas sejam as que os eleitores escolheram depende ainda da
           auditoria de Benaloh (seção 10), dos códigos conferidos (seção 9) e dos fiscais com o pré-BU (seção 12). O passo
           16 existe para dizer onde essas condições não foram cumpridas.
         </p>
       </section>
 
       <!-- ================================================================== -->
-      <section class="capitulo" id="limites" aria-labelledby="limites-h">
+      <section class="capitulo" id="t-software" aria-labelledby="t-software-h">
         <div class="capitulo-cab">
           <span class="capitulo-num">16</span>
+          <h2 id="t-software-h">O programa da urna</h2>
+        </div>
+        <aside class="nota"><span class="marcador">§24</span>Compilação reproduzível, registro de versões, política e atestação.</aside>
+        <p>
+          O Corolário 15.1 não menciona o programa da urna: a integridade da contagem vale qualquer que seja o binário
+          executado, desde que as auditorias de Benaloh e as conferências de código e de pré-BU aconteçam. Esta seção
+          trata do que depende do binário: o sigilo (§28.7, §28.8) e a detecção precoce de problemas.
+        </p>
+
+        <h3>Compilação reproduzível e registro de versões</h3>
+        <p>
+          Uma compilação é reproduzível quando a função \(\mathsf{build}(\text{fonte}, \text{toolchain})\) é
+          determinística: o mesmo commit com a mesma toolchain fixada produz os mesmos bytes, e portanto o mesmo
+          \(h = \mathrm{SHA256}(\text{artefato})\). Uma versão só é publicada depois que dois compiladores independentes
+          relatam o mesmo \(h\) (§24.1). O registro de versão lista \((\text{versão}, \text{commit}, [(\text{papel},
+          \text{alvo}, h)])\) e recebe assinaturas Ed25519 dos signatários de versão. Registros e assinaturas vão para um
+          <em>registro de versões</em> com a mesma estrutura de Merkle do mural (seção 11), cabeças assinadas e espelhos.
+        </p>
+        <div class="enunciado">
+          <span class="rotulo">Definição 16.1 (binário aprovado).</span> Seja \(P\) a política de software, com
+          signatários \(\Sigma\) e limiar \(k_r\). Um hash \(h\) é aprovado se (i) \(h\) consta de \(P\) ou de uma
+          atualização de política publicada antes de <code>polls_open</code>, e (ii) o registro de versões contém um
+          registro \(R\) com \(h \in R\) e assinaturas válidas sobre \(R\) de pelo menos \(k_r\) signatários distintos de
+          \(\Sigma\), com prova de inclusão sob uma cabeça assinada.
+        </div>
+        <p>
+          A regra 12 do §7.2 exige que nenhum bloco detenha \(k_r\) ou mais chaves de \(\Sigma\). Pela condição (ii), uma
+          atualização de política só pode acrescentar binários que já reuniram assinaturas de mais de um bloco. Pela
+          equivocação do registro (Proposição 11.1 aplicada a ele), uma versão mostrada a uns e escondida de outros deixa
+          uma prova assinada.
+        </p>
+
+        <h3>Medição e atestação</h3>
+        <p>
+          Cada zerésima e cada pacote trazem a medição \(\mathrm{SHA256}\) do binário que a urna afirma executar, e o
+          passo 5 do verificador rejeita medições não aprovadas. Uma medição declarada pelo próprio software não vale
+          contra software comprometido; por isso o §24.5 define uma <em>atestação</em> TPM 2.0: uma citação dos registros
+          PCR, assinada por uma chave de atestação que reside no chip, sobre um nonce
+        </p>
+        \[ n_{\text{abre}} = \mathsf{D}(\texttt{attest-nonce}, \mathit{ctx\_hash}, \mathit{machine}, \mathit{session}, \mathit{opening\_challenge}), \]
+        \[ n_{\text{fecha}} = \mathsf{D}(\texttt{attest-nonce-close}, \mathit{ctx\_hash}, \mathit{machine}, \mathit{session}, h_{\text{final}}). \]
+        <div class="enunciado">
+          <span class="rotulo">Proposição 16.2.</span> Se a chave de atestação não vaza do chip e o chip mede
+          corretamente a cadeia de carga, então uma citação válida sobre \(n_{\text{abre}}\) prova que o binário medido
+          estava carregado depois que o terminal do mesário sorteou <code>opening_challenge</code>, e uma citação válida
+          sobre \(n_{\text{fecha}}\) prova que ele estava carregado quando a cadeia chegou a \(h_{\text{final}}\).
+          Se, além disso, o contador de reinícios do chip for o mesmo nas duas citações, o mesmo binário ficou carregado
+          durante toda a sessão.
+        </div>
+        <div class="prova">
+          <span class="rotulo">Prova.</span>
+          <code>opening_challenge</code> é imprevisível antes de ser sorteado, então \(n_{\text{abre}}\) também o é (modelo
+          do oráculo aleatório para \(\mathsf{D}\)). Uma citação sobre ele não pode ter sido obtida antes, por exemplo
+          carregando um binário honesto, citando e reiniciando com outro. Como \(h_{\text{final}}\) compromete toda a
+          sessão (Proposição 9.1), uma citação sobre \(n_{\text{fecha}}\) só pode ser feita depois da última cédula. Os PCR
+          só mudam por extensão de hash, e só voltam ao estado inicial num reinício. Carregar outro binário sem reiniciar
+          altera os PCR, e a citação final mostraria valores diferentes. Carregar outro binário e reiniciar de volta no
+          honesto antes do fim restaura os PCR, mas incrementa o contador de reinícios que a própria citação traz
+          (<code>resetCount</code> em <code>TPMS_CLOCK_INFO</code>). Forjar qualquer citação exige forjar a assinatura do
+          chip.
+        </div>
+        <p>
+          As hipóteses da Proposição 16.2 são físicas e não criptográficas: a raiz de confiança passa a ser o fabricante do
+          chip e a cadeia de certificados da chave de atestação. A versão 0.4 define o formato e a ligação com os pacotes,
+          mas não torna a atestação obrigatória e deixa para depois as regras de PCR, de certificados e de como tratar
+          um reinício legítimo, como a recuperação depois de uma queda de energia (§24.5, §29). A
+          perícia por sorteio público, depois da eleição, completa a defesa, comparando urnas sorteadas com o binário
+          aprovado e com seus diários.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="limites" aria-labelledby="limites-h">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">17</span>
           <h2 id="limites-h">Limites e questões em aberto</h2>
         </div>
         <p>

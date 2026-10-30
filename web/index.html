@@ -200,7 +200,8 @@
         <li><span class="n">VII</span><a href="#cap-7">Os papéis da seção</a><span class="d">zerésima, pré-boletim e boletim de urna</span></li>
         <li><span class="n">VIII</span><a href="#cap-8">O embaralhador</a><span class="d">desfazer a ordem em que os votos chegaram</span></li>
         <li><span class="n">IX</span><a href="#cap-9">O verificador</a><span class="d">dezesseis conferências que qualquer um roda</span></li>
-        <li><span class="n">X</span><a href="#problemas">Onde ainda há problemas</a><span class="d">o que esta urna não resolve</span></li>
+        <li><span class="n">X</span><a href="#cap-10">O programa da urna</a><span class="d">como saber que a urna roda o programa publicado</span></li>
+        <li><span class="n">XI</span><a href="#problemas">Onde ainda há problemas</a><span class="d">o que esta urna não resolve</span></li>
         <li><span class="n">?</span><a href="#duvidas">Dúvidas frequentes</a><span class="d">respostas curtas</span></li>
       </ol>
 
@@ -783,9 +784,157 @@
       </section>
 
       <!-- ================================================================== -->
-      <section class="capitulo" id="problemas" aria-labelledby="prob-t">
+      <section class="capitulo" id="cap-10" aria-labelledby="cap-10-t">
         <div class="capitulo-cab">
           <span class="capitulo-num">X</span>
+          <h2 id="cap-10-t">O programa da urna</h2>
+          <p class="pergunta">Como saber que a urna roda o programa descrito aqui, e não outro?</p>
+        </div>
+
+        <p class="capitular">
+          É a pergunta certa a fazer, porque tudo o que este caderno descreve acontece dentro de um programa. A resposta
+          tem duas partes: o que acontece se o programa for outro, e como se confere que é o programa certo.
+        </p>
+
+        <h3>Um programa adulterado não muda a contagem sem ser pego</h3>
+        <p>
+          Suponha o pior: alguém troca o programa de uma urna por uma versão adulterada. Para mudar o resultado, essa
+          versão teria de fazer uma destas coisas, e cada uma é pega por uma conferência que não roda na urna:
+        </p>
+        <ul>
+          <li>trancar um voto diferente do escolhido: pego pelas auditorias, conferidas num aparelho independente (capítulo IV);</li>
+          <li>trancar 500 votos numa caixa: a prova de 0 ou 1 não fecha (capítulo III);</li>
+          <li>sumir com votos ou inventar outros: os códigos dos eleitores e o pré-boletim do fiscal não batem (capítulos V e VII);</li>
+          <li>mexer na soma: o verificador refaz a conta a partir do mural (capítulo IX).</li>
+        </ul>
+        <p>
+          Ou seja, a contagem não depende de confiar no programa da urna. Ela depende das provas e de que eleitores e
+          fiscais façam as conferências.
+        </p>
+        <p>
+          O <strong>sigilo</strong>, esse sim, depende do programa. A urna vê o voto enquanto o eleitor escolhe, e um
+          programa adulterado poderia guardar ou vazar escolhas. Por isso é preciso conferir também que o programa da
+          urna é o programa publicado. Isso é feito em cinco camadas.
+        </p>
+
+        <figure class="tavola desenho" aria-labelledby="tav4-leg">
+          <svg viewBox="0 0 900 250" role="img" aria-label="Do código aberto à urna: duas compilações, a mesma impressão digital, assinaturas de vários blocos e o chip que mede o programa">
+            <!-- a: source code as a book -->
+            <g transform="translate(20 50)">
+              <path class="t papel" d="M0 10 h96 v120 h-96 z" />
+              <path class="t fino" d="M12 30 h60 M20 44 h56 M20 58 h44 M12 72 h58 M20 86 h50 M20 100 h36 M12 114 h48" />
+              <text class="letra" x="42" y="164">a</text>
+              <text class="rot" x="2" y="190">código aberto</text>
+            </g>
+            <path class="s tracejado" d="M126 90 C 160 70, 180 66, 210 70" marker-end="url(#seta)" />
+            <path class="s tracejado" d="M126 130 C 160 150, 180 154, 210 150" marker-end="url(#seta)" />
+            <!-- b: two independent builders -->
+            <g transform="translate(220 40)">
+              <circle class="t" cx="22" cy="30" r="20" />
+              <circle class="t" cx="22" cy="30" r="7" />
+              <path class="t fino" d="M22 6 v-6 M22 54 v6 M-2 30 h-6 M46 30 h6 M5 13 l-4 -4 M39 47 l4 4 M39 13 l4 -4 M5 47 l-4 4" />
+              <text class="num" x="62" y="35">3FA2…91C0</text>
+              <circle class="t" cx="22" cy="110" r="20" />
+              <circle class="t" cx="22" cy="110" r="7" />
+              <path class="t fino" d="M22 86 v-6 M22 134 v6 M-2 110 h-6 M46 110 h6 M5 93 l-4 -4 M39 127 l4 4 M39 93 l4 -4 M5 127 l-4 4" />
+              <text class="num" x="62" y="115">3FA2…91C0</text>
+              <text class="letra" x="78" y="164">b</text>
+              <text class="rot" x="10" y="190">duas compilações, o mesmo resultado</text>
+            </g>
+            <path class="s tracejado" d="M410 110 C 430 110, 440 110, 458 110" marker-end="url(#seta)" />
+            <!-- c: seals from several blocs -->
+            <g transform="translate(470 56)">
+              <circle class="s" cx="24" cy="24" r="20" /><circle class="h" cx="24" cy="24" r="20" />
+              <circle class="s" cx="70" cy="24" r="20" />
+              <circle class="s" cx="116" cy="24" r="20" /><circle class="h" cx="116" cy="24" r="20" />
+              <circle class="t fino" cx="47" cy="78" r="20" opacity="0.45" />
+              <circle class="t fino" cx="93" cy="78" r="20" opacity="0.45" />
+              <text class="rot" x="0" y="124">3 de 5 assinaturas,</text>
+              <text class="rot" x="0" y="142">de blocos diferentes</text>
+              <text class="letra" x="64" y="108">c</text>
+            </g>
+            <path class="s tracejado" d="M640 110 C 660 110, 670 110, 688 110" marker-end="url(#seta)" />
+            <!-- d: the machine with its chip -->
+            <g transform="translate(700 50)">
+              <rect class="t papel" x="0" y="0" width="150" height="120" />
+              <rect class="t" x="10" y="12" width="74" height="50" />
+              <text class="num" x="16" y="34">ZERÉSIMA</text>
+              <text class="num" x="16" y="52">3FA2…91C0</text>
+              <rect class="s" x="104" y="74" width="30" height="30" />
+              <path class="s fino" d="M104 82 h-6 M104 90 h-6 M104 98 h-6 M134 82 h6 M134 90 h6 M134 98 h6" />
+              <rect class="h" x="104" y="74" width="30" height="30" />
+              <text class="letra" x="62" y="148">d</text>
+              <text class="letra" x="113" y="66">e</text>
+              <text class="rot" x="0" y="190">a urna declara e o chip confirma</text>
+            </g>
+          </svg>
+          <figcaption id="tav4-leg">
+            <b>Tav. IV.</b> Do código aberto à urna.
+            <ul class="legenda">
+              <li><i>a</i> O código do programa é público.</li>
+              <li><i>b</i> Grupos independentes o compilam e obtêm o mesmo arquivo, com a mesma impressão digital.</li>
+              <li><i>c</i> A versão só vale com assinaturas de vários blocos; nenhum bloco aprova sozinho.</li>
+              <li><i>d</i> A zerésima e o pacote da urna trazem a impressão digital do programa que rodou.</li>
+              <li><i>e</i> Um chip de segurança mede o programa por conta própria e assina essa medição.</li>
+            </ul>
+          </figcaption>
+        </figure>
+
+        <h3>As cinco camadas</h3>
+        <p>
+          <strong>1. Código aberto e compilação reproduzível.</strong> O programa de computador nasce de um texto, o
+          código-fonte, que é transformado no arquivo que a urna executa. A compilação é <em>reproduzível</em> quando
+          qualquer pessoa que fizer essa transformação a partir do mesmo código obtém exatamente o mesmo arquivo, byte a
+          byte, e portanto a mesma impressão digital. É como uma receita tão precisa que dois cozinheiros diferentes
+          produzem bolos idênticos até o último grão. Uma versão só é publicada depois que pelo menos dois grupos
+          independentes chegam à mesma impressão digital.
+        </p>
+        <aside class="nota">
+          <span class="marcador">O que já existe</span>
+          Na cerimônia de assinatura digital e lacração dos sistemas, o TSE, partidos e entidades já assinam os programas
+          da urna e publicam seus resumos digitais. As camadas daqui completam esse processo.
+        </aside>
+        <p>
+          <strong>2. Assinaturas de vários blocos.</strong> Uma versão só é aprovada com um número mínimo de assinaturas
+          de organizações diferentes: partidos, universidades, a OAB, a Justiça Eleitoral. Assim como os guardiões da
+          chave, nenhum bloco tem assinaturas suficientes para aprovar sozinho. Quem assina declara que compilou o
+          código e chegou à mesma impressão digital.
+        </p>
+        <p>
+          <strong>3. Um registro público de versões.</strong> Todas as versões e assinaturas vão para um registro que
+          funciona como o mural do capítulo VI: só aceita acréscimos e é copiado por várias instituições. Não pode
+          existir uma versão "secreta", aprovada sem que todos vejam. Depois da abertura da votação, a lista de versões
+          aprovadas fica congelada.
+        </p>
+        <p>
+          <strong>4. A urna declara o programa, e um chip confirma.</strong> A zerésima e o pacote de cada urna trazem a
+          impressão digital do programa que rodou, e o verificador rejeita pacotes de programas não aprovados. Mas um
+          programa adulterado poderia mentir sobre a própria impressão digital. Por isso a urna tem um chip de segurança
+          que mede o programa no momento em que ele é carregado, por conta própria, e assina essa medição com uma chave
+          que o programa não alcança. A assinatura inclui um número sorteado pelo terminal do mesário na abertura, e outra
+          é feita no encerramento, presa ao último código do dia. Assim ela não pode ser preparada antes. E, como o chip conta
+          quantas vezes a urna foi reiniciada, trocar o programa no meio da votação e voltar ao original deixaria marca.
+        </p>
+        <p>
+          <strong>5. Perícia por sorteio.</strong> Depois da eleição, um sorteio público escolhe urnas para inspeção.
+          Peritos de várias instituições comparam o programa e o diário de cada urna sorteada com o que foi aprovado e
+          publicado.
+        </p>
+
+        <h3>Até onde isso vai</h3>
+        <p>
+          As três primeiras camadas garantem que o programa aprovado é exatamente o código que todos podem ler, e que não
+          há outro. A quarta liga cada urna a esse programa. O elo mais fraco é o próprio chip: confiar na medição é confiar
+          no fabricante do chip e na guarda física das urnas. A especificação define o formato da atestação, mas, nesta
+          versão, ainda não a torna obrigatória nem fixa as regras de conferência do chip. Isso está listado na seção
+          seguinte.
+        </p>
+      </section>
+
+      <!-- ================================================================== -->
+      <section class="capitulo" id="problemas" aria-labelledby="prob-t">
+        <div class="capitulo-cab">
+          <span class="capitulo-num">XI</span>
           <h2 id="prob-t">Onde ainda há problemas</h2>
           <p class="pergunta">O que esta urna não resolve, dito com franqueza.</p>
         </div>
@@ -805,7 +954,9 @@
             </p>
             <p class="defesa">
               Defesas: programa que qualquer um recompila e confere, assinado por partes interessadas e pela Justiça Eleitoral;
-              atestação do equipamento; sorteio público de urnas para perícia depois da eleição.
+              atestação do equipamento; sorteio público de urnas para perícia depois da eleição (capítulo X). A
+              atestação ainda não é obrigatória nesta versão da especificação, e confiar nela é confiar no fabricante do
+              chip.
             </p>
           </li>
           <li>
