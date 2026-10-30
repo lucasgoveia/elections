@@ -12,7 +12,7 @@ appears mirrored once, in the footer.
 |---|---|---|
 | Início | `index.html`, `src/site/inicio.ts` | Explain every concept to a lay reader, in nine chapters with plates and four small working toys (adding locked boxes, the hidden line, the chance of escaping an audit, the chain of codes); the known problems; the FAQ. |
 | Técnico | `tecnico.html`, `src/site/tecnico.ts` | The same pieces with definitions, toy-group arithmetic (p = 23, order 11) and proofs, typeset with KaTeX. Each section cites SPEC.md. |
-| Oficina | `oficina.html`, `src/main.tsx` | The Urna Lab below, on the same paper, with a 17-step guided tour (`Roteiro.tsx`) that ticks itself off from the simulation state. |
+| Tente você mesmo | `oficina.html`, `src/main.tsx` | The Urna Lab below, on the same paper, with a 17-step guided tour (`Roteiro.tsx`) that ticks itself off from the simulation state. |
 
 Reading-page tokens (`src/site/site.css`), light and a candle-light dark:
 `--carta` paper, `--carta-funda` inset, `--tinta` ink, `--sepia` faded ink,
@@ -22,7 +22,7 @@ Garamond (text, old-style figures), Courier Prime (data).
 
 All copy is Brazilian Portuguese.
 
-# Oficina (Urna Lab)
+# Tente você mesmo (Urna Lab)
 
 A test bench for the eg/v1 library, running entirely in the browser through
 WebAssembly. One job: run a Brazilian polling day end to end, see every

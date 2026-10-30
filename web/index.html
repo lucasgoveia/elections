@@ -34,7 +34,7 @@
           <ul class="paginas">
             <li><a href="./" aria-current="page">Início</a></li>
             <li><a href="./tecnico.html">Técnico</a></li>
-            <li><a href="./oficina.html">Oficina</a></li>
+            <li><a href="./oficina.html">Tente você mesmo</a></li>
           </ul>
         </nav>
       </div>
@@ -53,7 +53,7 @@
         </p>
         <p>
           Tudo aqui é explicado sem fórmulas. Quem quiser as fórmulas e as provas encontra na página
-          <a href="./tecnico.html">Técnico</a>. Quem quiser apertar os botões vai à <a href="./oficina.html">Oficina</a>,
+          <a href="./tecnico.html">Técnico</a>. Quem quiser apertar os botões vai a <a href="./oficina.html">Tente você mesmo</a>,
           onde roda uma eleição inteira de exemplo no próprio navegador. As dúvidas mais comuns estão no
           fim desta página, em <a href="#duvidas">Dúvidas frequentes</a>.
         </p>
@@ -976,7 +976,7 @@
               <p>
                 São opções da cédula como qualquer outra, trancadas da mesma forma e contadas à parte. Como manda a
                 lei brasileira, nenhum dos dois entra nos votos válidos. Para presidente, ganha no primeiro turno quem
-                passar de metade dos válidos. A <a href="./oficina.html">Oficina</a> aplica essa regra.
+                passar de metade dos válidos. A simulação de <a href="./oficina.html">Tente você mesmo</a> aplica essa regra.
               </p>
             </div>
           </details>
@@ -996,7 +996,7 @@
             <div class="resposta">
               <p>
                 Um pouco. As somas de cada seção podem ser abertas na noite da eleição, assim que os pacotes chegam. O
-                que custa mais é gerar e conferir as provas: na Oficina, uma eleição de exemplo com dez seções é apurada e
+                que custa mais é gerar e conferir as provas: na simulação de Tente você mesmo, uma eleição de exemplo com dez seções é apurada e
                 verificada em segundos, mas uma eleição nacional, com centenas de milhares de seções, exige
                 computadores dedicados e provas agrupadas.
               </p>
@@ -1015,16 +1015,23 @@
         </div>
       </section>
 
-      <nav class="convite" aria-label="Continuar">
-        <a class="cartao" href="./tecnico.html">
-          <h3>Técnico</h3>
-          <p>As mesmas ideias com definições, contas feitas à mão com números pequenos e as provas de por que funcionam.</p>
-        </a>
-        <a class="cartao" href="./oficina.html">
-          <h3>Oficina</h3>
-          <p>Uma eleição inteira no seu navegador, com roteiro guiado: vote, audite, apure, sabote e verifique.</p>
-        </a>
-      </nav>
+      <section class="chamada" aria-labelledby="chamada-t">
+        <span class="sobrescrito">Sem instalar nada, direto no navegador</span>
+        <h2 id="chamada-t">Tente você mesmo</h2>
+        <p class="chamada-lede">
+          Rode uma eleição inteira, com a criptografia de verdade, guiado passo a passo. Leva uns dez minutos.
+        </p>
+        <ol class="chamada-passos">
+          <li>Gere a chave com os guardiões e abra a votação.</li>
+          <li>Vote na urna, audite uma cédula e confira o recibo.</li>
+          <li>Apure, veja os boletins e rode o verificador.</li>
+          <li>Sabote a eleição e veja quem pega a fraude.</li>
+        </ol>
+        <div class="chamada-acoes">
+          <a class="botao botao-forte chamada-botao" href="./oficina.html">Começar a eleição</a>
+          <a href="./tecnico.html">Ou leia as provas na página Técnico</a>
+        </div>
+      </section>
 
       <footer class="colofao">
         <span>Protótipo de pesquisa da especificação eg/v1, rascunho 0.4.</span>

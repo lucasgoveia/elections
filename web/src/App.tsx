@@ -22,7 +22,7 @@ function Rail() {
   const cur = CURRENT[snap.phase];
   return (
     <header className="rail">
-      <div className="brand">Oficina</div>
+      <div className="brand">Tente você mesmo</div>
       <ol className="rail-phases" aria-label="Etapa da eleição">
         {PHASES.map((label, i) => (
           <li
@@ -66,7 +66,7 @@ function SiteBar() {
           </li>
           <li>
             <a href="./oficina.html" aria-current="page">
-              Oficina
+              Tente você mesmo
             </a>
           </li>
         </ul>

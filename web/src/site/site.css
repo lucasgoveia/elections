@@ -993,35 +993,53 @@ figure figcaption b {
 
 /* -- closing ---------------------------------------------------------------- */
 
-.convite {
-  margin-top: 72px;
-  padding: 26px 0 0;
+/* -- the closing call to action ---------------------------------------- */
+
+.chamada {
+  margin-top: 80px;
+  padding: 30px 0 34px;
   border-top: 3px double var(--tinta);
-  display: grid;
-  gap: 18px 36px;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  max-width: none !important;
+  border-bottom: 3px double var(--tinta);
+  text-align: left;
 }
 
-.convite a.cartao {
-  color: var(--tinta);
-  text-decoration: none;
-  display: block;
+.chamada h2 {
+  font-size: clamp(36px, 5.4vw, 52px);
+  margin-bottom: 12px;
 }
 
-.convite a.cartao h3 {
-  margin: 0 0 6px;
+.chamada-lede {
+  font-size: 21px;
+  line-height: 1.5;
+}
+
+.chamada-passos {
+  margin: 0 0 24px;
+  padding-left: 1.6em;
+  font-size: 18px;
+}
+
+.chamada-passos li::marker {
+  font-family: var(--f-titulo);
   color: var(--sanguinea);
 }
 
-.convite a.cartao:hover h3 {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+.chamada-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 24px;
 }
 
-.convite p {
-  margin: 0;
-  font-size: 17px;
+.chamada-botao {
+  font-size: 21px;
+  padding: 14px 26px 15px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.chamada-botao:hover {
+  color: var(--carta);
 }
 
 .colofao {
