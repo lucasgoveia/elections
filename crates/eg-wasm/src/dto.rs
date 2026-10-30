@@ -191,11 +191,11 @@ pub fn scenarios_dto() -> Vec<ScenarioDto> {
     let names = [
         (
             Scenario::StarWars,
-            "Star Wars: Galactic Republic General Election",
+            "Star Wars: Eleição Geral da República Galáctica",
         ),
         (
             Scenario::Pilot,
-            "Brazilian pilot (governor, senate, deputies, mayor)",
+            "Piloto brasileiro (governador, senado, deputados, prefeito)",
         ),
     ];
     names
@@ -246,6 +246,12 @@ pub struct ElectionDto {
 pub struct ContestDto {
     pub index: u64,
     pub name: String,
+    /// "Presidente" or "Senador" for the Star Wars contests, else the contest name.
+    pub office: String,
+    /// "1ª vaga" or "2ª vaga" for a senate seat, else none.
+    pub seat: Option<String>,
+    /// The planet of a senate seat, else none.
+    pub place: Option<String>,
     pub kind: &'static str,
     pub method: &'static str,
     pub limit: u64,
@@ -263,6 +269,8 @@ pub struct OptionDto {
     pub number: Option<String>,
     /// The name of the party of the option, if any.
     pub party: Option<String>,
+    /// The ballot number of the party of the option, if any.
+    pub party_number: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -293,6 +301,20 @@ pub struct SectionDto {
     pub poll_workers: u64,
 }
 
+/// Splits a Star Wars senate contest name, "Senador — <planet> — <seat>", into
+/// its office, place and seat. Other names are the office, with no place or seat.
+fn split_contest_name(name: &str) -> (String, Option<String>, Option<String>) {
+    let parts: Vec<&str> = name.split(" \u{2014} ").collect();
+    match parts.as_slice() {
+        [office, place, seat] => (
+            (*office).to_owned(),
+            Some((*place).to_owned()),
+            Some((*seat).to_owned()),
+        ),
+        _ => (name.to_owned(), None, None),
+    }
+}
+
 impl ElectionDto {
     /// The election of `manifest` and `registry`, played as `scenario`.
     pub fn new(manifest: &Manifest, registry: &Registry, scenario: Scenario) -> ElectionDto {
@@ -303,32 +325,42 @@ impl ElectionDto {
         let contests = manifest
             .contests
             .iter()
-            .map(|c| ContestDto {
-                index: c.index,
-                name: c.name.clone(),
-                kind: contest_kind_name(c.kind),
-                method: method_name(c.method),
-                limit: c.limit,
-                options: c
-                    .options
-                    .iter()
-                    .map(|o| OptionDto {
-                        index: o.index,
-                        name: o.name.clone(),
-                        kind: option_kind_name(o.kind),
-                        number: o.number.clone(),
-                        party: o
-                            .party_index
-                            .and_then(|p| manifest.parties.iter().find(|x| x.index == p))
-                            .map(|x| x.name.clone()),
-                    })
-                    .collect(),
-                seats: c.seats,
-                link_group: manifest
-                    .link_groups
-                    .iter()
-                    .find(|g| g.contests.contains(&c.index))
-                    .map(|g| g.index),
+            .map(|c| {
+                let (office, place, seat) = split_contest_name(&c.name);
+                ContestDto {
+                    index: c.index,
+                    name: c.name.clone(),
+                    office,
+                    seat,
+                    place,
+                    kind: contest_kind_name(c.kind),
+                    method: method_name(c.method),
+                    limit: c.limit,
+                    options: c
+                        .options
+                        .iter()
+                        .map(|o| OptionDto {
+                            index: o.index,
+                            name: o.name.clone(),
+                            kind: option_kind_name(o.kind),
+                            number: o.number.clone(),
+                            party: o
+                                .party_index
+                                .and_then(|p| manifest.parties.iter().find(|x| x.index == p))
+                                .map(|x| x.name.clone()),
+                            party_number: o
+                                .party_index
+                                .and_then(|p| manifest.parties.iter().find(|x| x.index == p))
+                                .map(|x| x.number.clone()),
+                        })
+                        .collect(),
+                    seats: c.seats,
+                    link_group: manifest
+                        .link_groups
+                        .iter()
+                        .find(|g| g.contests.contains(&c.index))
+                        .map(|g| g.index),
+                }
             })
             .collect();
         ElectionDto {
@@ -604,11 +636,28 @@ pub struct SeatDto {
     pub party: String,
 }
 
+/// One section of the result. `abstentions` is `eligible - cast`, saturating.
+/// `contests` holds the contests the section counted itself (pooled contests
+/// are absent).
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SectionResultDto {
-    pub id: String,
+    pub section_id: String,
     pub matches: bool,
+    pub eligible: u64,
+    pub cast: u64,
+    pub abstentions: u64,
+    pub pre_bu_fingerprint: String,
+    pub contests: Vec<SectionContestDto>,
+}
+
+/// A contest counted in one section: `votes` per option, in option order.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SectionContestDto {
+    pub index: u64,
+    pub counted: u64,
+    pub votes: Vec<u64>,
 }
 
 impl From<&ResultView> for ResultDto {
@@ -645,9 +694,22 @@ impl From<&ResultView> for ResultDto {
             sections: r
                 .sections
                 .iter()
-                .map(|(id, matches)| SectionResultDto {
-                    id: id.clone(),
-                    matches: *matches,
+                .map(|s| SectionResultDto {
+                    section_id: s.section_id.clone(),
+                    matches: s.matches,
+                    eligible: s.eligible,
+                    cast: s.cast,
+                    abstentions: s.eligible.saturating_sub(s.cast),
+                    pre_bu_fingerprint: s.pre_bu_fingerprint.clone(),
+                    contests: s
+                        .contests
+                        .iter()
+                        .map(|(index, counted, votes)| SectionContestDto {
+                            index: *index,
+                            counted: *counted,
+                            votes: votes.clone(),
+                        })
+                        .collect(),
                 })
                 .collect(),
         }

@@ -61,8 +61,9 @@ type Sections = Vec<(SectionTally, bool, Vec<ContestSum>)>;
 ///
 /// `Pilot` is the Brazilian sample (governor, senate, deputies, mayor). It has
 /// two sections, a reserve machine, a link group and a mixnet contest.
-/// `StarWars` is the Galactic Republic election: ten planet sections, no reserve
-/// machine, no link group and no mixnet contest.
+/// `StarWars` is the Galactic Republic election, in Brazilian form: ten planet
+/// sections, each with two linked senate contests; no reserve machine and no
+/// mixnet contest.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scenario {
     Pilot,
@@ -230,8 +231,32 @@ pub struct ContestView {
 #[derive(Clone, Debug)]
 pub struct ResultView {
     pub contests: Vec<ContestView>,
-    /// `(section id, the pre-BU fingerprint matches the recomputed tally)`.
-    pub sections: Vec<(String, bool)>,
+    /// One entry per section with a pre-BU, in board order.
+    pub sections: Vec<SectionView>,
+}
+
+/// One section of the published result, with its final BU data.
+#[derive(Clone, Debug)]
+pub struct SectionView {
+    pub section_id: String,
+    /// Whether the pre-BU fingerprint matches the recomputed section tally.
+    pub matches: bool,
+    /// Eligible voters, from the registry.
+    pub eligible: u64,
+    /// Ballots cast in the packages of the section.
+    pub cast: u64,
+    /// `(contest, counted, votes per option)` of the contests not pooled.
+    pub contests: Vec<(u64, u64, Vec<u64>)>,
+    /// The pre-BU fingerprint, as grouped upper-case hex.
+    pub pre_bu_fingerprint: String,
+}
+
+/// Facts of a section that the published result does not carry.
+#[derive(Clone, Debug)]
+struct SectionFacts {
+    section_id: String,
+    cast: u64,
+    fingerprint: String,
 }
 
 /// Voter lookup by short code (§17.5).
@@ -304,6 +329,8 @@ struct Pipeline {
     /// Records to post, in order, before the result.
     posted: Vec<Value>,
     result: ElectionResult,
+    /// Per-section facts, in the order of the section tallies.
+    facts: Vec<SectionFacts>,
 }
 
 /// One election, played step by step.
@@ -919,6 +946,7 @@ impl Simulation {
         }
 
         let honest = pipeline.result;
+        let facts = pipeline.facts;
         let mut published = honest.clone();
         if self.attacks.ea_alters_result {
             if let Some(c) = published.contests.iter_mut().find(|c| c.contest == 0) {
@@ -931,7 +959,7 @@ impl Simulation {
         let signed = published.sign(&self.keys.ea);
         self.post(signed.clone())?;
         let verified = ElectionResult::from_signed(&signed, &manifest.ea_key, manifest)?;
-        let view = result_view(manifest, &verified);
+        let view = result_view(manifest, self.registry, &verified, &facts);
         self.recount = Some(honest);
         self.phase = Phase::Tallied;
         Ok(view)
@@ -1118,10 +1146,12 @@ impl Simulation {
         Ok(view)
     }
 
-    /// Random valid choices for the contests a machine offers. Single and
-    /// proportional contests get one option. Multi contests get up to L candidate
-    /// options. A candidate already chosen in a linked contest is not chosen
-    /// again (§12.6 link groups).
+    /// Random valid choices for the contests a machine offers. Each contest
+    /// gets a blank or a null vote about 10% of the time each, when the contest
+    /// has that option. Otherwise a single or proportional contest gets one
+    /// candidate or party option, and a multi contest gets up to L candidates.
+    /// A candidate already chosen in a linked contest is not chosen again
+    /// (§12.6 link groups).
     pub fn random_choices(&mut self, machine_id: &str) -> Vec<ContestPlain> {
         let manifest = self.manifest;
         let registry = self.registry;
@@ -1135,7 +1165,18 @@ impl Simulation {
             let is_free = |o: &crate::manifest::BallotOption| {
                 !(o.kind == OptionKind::Candidate && forbidden.contains(&o.index))
             };
+            let find = |kind: OptionKind| {
+                contest
+                    .options
+                    .iter()
+                    .find(|o| o.kind == kind)
+                    .map(|o| o.index)
+            };
+            let blank = find(OptionKind::Blank);
+            let null = find(OptionKind::Null);
+            let roll = below(rng, 100);
             let selected = match contest.kind {
+                ContestKind::Multi if roll < 10 && null.is_some() => null.into_iter().collect(),
                 ContestKind::Multi => {
                     let mut candidates: Vec<u64> = contest
                         .options
@@ -1153,17 +1194,38 @@ impl Simulation {
                     chosen
                 }
                 _ => {
-                    let allowed: Vec<u64> = contest
-                        .options
-                        .iter()
-                        .filter(|o| is_free(o))
-                        .map(|o| o.index)
-                        .collect();
-                    if allowed.is_empty() {
-                        Vec::new()
-                    } else {
-                        let pick = below(rng, allowed.len() as u64) as usize;
-                        vec![allowed[pick]]
+                    let special = match roll {
+                        r if r < 10 => blank,
+                        r if r < 20 => null,
+                        _ => None,
+                    };
+                    match special {
+                        Some(index) => vec![index],
+                        None => {
+                            let mut pool: Vec<u64> = contest
+                                .options
+                                .iter()
+                                .filter(|o| {
+                                    is_free(o)
+                                        && !matches!(o.kind, OptionKind::Blank | OptionKind::Null)
+                                })
+                                .map(|o| o.index)
+                                .collect();
+                            if pool.is_empty() {
+                                pool = contest
+                                    .options
+                                    .iter()
+                                    .filter(|o| is_free(o))
+                                    .map(|o| o.index)
+                                    .collect();
+                            }
+                            if pool.is_empty() {
+                                Vec::new()
+                            } else {
+                                let pick = below(rng, pool.len() as u64) as usize;
+                                vec![pool[pick]]
+                            }
+                        }
                     }
                 }
             };
@@ -1491,7 +1553,34 @@ fn run_pipeline(
         mix,
     };
     let result = authority::election_result(&view, &sections, &pool, &inputs)?;
-    Ok(Pipeline { posted, result })
+    let facts = sections
+        .iter()
+        .map(|(st, _, _)| {
+            let cast = view
+                .packages
+                .iter()
+                .filter(|p| st.packages.contains(&p.id))
+                .map(|p| p.cast.len() as u64)
+                .sum();
+            let fingerprint = view
+                .packages
+                .iter()
+                .find(|p| st.packages.first() == Some(&p.id))
+                .and_then(|p| p.pre_bu.as_ref())
+                .map(|(pb, _)| grouped(&pb.fingerprint))
+                .unwrap_or_default();
+            SectionFacts {
+                section_id: st.section_id.clone(),
+                cast,
+                fingerprint,
+            }
+        })
+        .collect();
+    Ok(Pipeline {
+        posted,
+        result,
+        facts,
+    })
 }
 
 /// Every trustee signs a share set for `target`. Trustee 3 corrupts its sets
@@ -1529,7 +1618,12 @@ fn corrupt_set(value: &Value, sk: &SigningKey) -> Result<Value, Error> {
 }
 
 /// The published result, with names and party names.
-fn result_view(manifest: &Manifest, r: &ElectionResult) -> ResultView {
+fn result_view(
+    manifest: &Manifest,
+    registry: &Registry,
+    r: &ElectionResult,
+    facts: &[SectionFacts],
+) -> ResultView {
     let contests = r
         .contests
         .iter()
@@ -1579,7 +1673,17 @@ fn result_view(manifest: &Manifest, r: &ElectionResult) -> ResultView {
         sections: r
             .sections
             .iter()
-            .map(|s| (s.section_id.clone(), s.matches))
+            .map(|s| {
+                let fact = facts.iter().find(|f| f.section_id == s.section_id);
+                SectionView {
+                    section_id: s.section_id.clone(),
+                    matches: s.matches,
+                    eligible: registry.section(&s.section_id).map_or(0, |e| e.eligible),
+                    cast: fact.map_or(0, |f| f.cast),
+                    contests: s.contests.clone(),
+                    pre_bu_fingerprint: fact.map(|f| f.fingerprint.clone()).unwrap_or_default(),
+                }
+            })
             .collect(),
     }
 }
@@ -1758,7 +1862,7 @@ mod tests {
             }
         }
         assert_eq!(view.sections.len(), sim.registry().sections.len());
-        assert!(view.sections.iter().all(|(_, m)| *m));
+        assert!(view.sections.iter().all(|s| s.matches));
 
         let slip = sim.slips()[0].clone();
         let found = sim.lookup(&slip.short_code).expect("lookup");
@@ -1781,22 +1885,73 @@ mod tests {
     }
 
     #[test]
-    fn starwars_run_all_has_eleven_contests_and_ten_sections() {
+    fn starwars_run_all_has_twenty_one_contests_and_ten_sections() {
         let mut sim = Simulation::with_scenario(21, Scenario::StarWars);
         let view = sim.run_all().expect("run_all");
         assert_eq!(sim.phase(), Phase::Tallied);
-        assert_eq!(view.contests.len(), 11);
+        assert_eq!(view.contests.len(), 21);
         assert_eq!(view.sections.len(), 10);
-        assert!(view.sections.iter().all(|(_, m)| *m));
-        assert_eq!(view.contests[0].name, "President of the Galactic Republic");
-        assert_eq!(view.contests[1].name, "Senator \u{2014} Tatooine");
-        // Each planet machine offers the President and its own senate race.
+        assert!(view.sections.iter().all(|s| s.matches));
+        assert_eq!(view.contests[0].name, "Presidente");
+        assert_eq!(
+            view.contests[1].name,
+            "Senador \u{2014} Tatooine \u{2014} 1ª vaga"
+        );
+        // Each planet machine offers the presidency and its two senate seats.
         assert!(view.contests.iter().all(|c| c.counted > 0));
+        // Every section's counted ballots match its cast ballots, and its
+        // eligible voters come from the registry.
+        for s in &view.sections {
+            assert_eq!(s.eligible, 120);
+            assert_eq!(s.cast, 3);
+            assert_eq!(s.contests.len(), 3, "{}", s.section_id);
+            assert!(s.pre_bu_fingerprint.contains('-'));
+        }
         // No mixnet contest, so the board holds no mix records.
         assert!(sim
             .entry_summaries()
             .iter()
             .all(|s| !s.kind.starts_with("mix")));
+    }
+
+    #[test]
+    fn random_choices_respect_link_groups_and_sometimes_blank_or_null() {
+        let mut sim = Simulation::with_scenario(30, Scenario::StarWars);
+        let manifest = sim.manifest().clone();
+        let (mut blanks, mut nulls) = (0u32, 0u32);
+        for _ in 0..100 {
+            for machine in sim.regular_machine_ids() {
+                let choices = sim.random_choices(&machine);
+                for c in &choices {
+                    let contest = manifest.contest(c.contest).expect("contest");
+                    for &sel in &c.selected {
+                        match contest.options[sel as usize].kind {
+                            OptionKind::Blank => blanks += 1,
+                            OptionKind::Null => nulls += 1,
+                            _ => {}
+                        }
+                    }
+                }
+                for group in &manifest.link_groups {
+                    let mut candidates: Vec<u64> = Vec::new();
+                    for c in choices
+                        .iter()
+                        .filter(|c| group.contests.contains(&c.contest))
+                    {
+                        let contest = manifest.contest(c.contest).expect("contest");
+                        candidates.extend(c.selected.iter().copied().filter(|&sel| {
+                            contest.options[sel as usize].kind == OptionKind::Candidate
+                        }));
+                    }
+                    let distinct = candidates.len();
+                    candidates.sort_unstable();
+                    candidates.dedup();
+                    assert_eq!(candidates.len(), distinct, "link group {}", group.index);
+                }
+            }
+        }
+        assert!(blanks > 0, "some blank votes");
+        assert!(nulls > 0, "some null votes");
     }
 
     #[test]
@@ -1866,7 +2021,7 @@ mod tests {
             sim.attacks_mut().trustee_lies = true;
             let view = sim.run_all().expect("run_all");
             assert_eq!(sim.phase(), Phase::Tallied);
-            assert!(view.sections.iter().all(|(_, m)| *m));
+            assert!(view.sections.iter().all(|s| s.matches));
         }
     }
 

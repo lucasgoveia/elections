@@ -319,12 +319,13 @@ fn pilot_election_dto_offers_every_contest_on_each_machine() {
 }
 
 #[test]
-fn starwars_election_dto_has_eleven_contests_and_ten_sections() {
+fn starwars_election_dto_has_twenty_one_contests_and_ten_sections() {
     let sim = Sim::with_scenario_dto(1, "star-wars").expect("star-wars");
     assert_eq!(sim.scenario_name(), "star-wars");
     let election = sim.election_dto();
     assert_eq!(election.scenario, "star-wars");
-    assert_eq!(election.contests.len(), 11);
+    assert_eq!(election.title, "Eleição Geral da República Galáctica");
+    assert_eq!(election.contests.len(), 21);
     assert_eq!(election.sections.len(), 10);
     assert!(election.reserve_machines.is_empty());
     assert!(election.reserve_machine_contests.is_empty());
@@ -332,8 +333,52 @@ fn starwars_election_dto_has_eleven_contests_and_ten_sections() {
         assert_eq!(s.machines.len(), 1);
         assert_eq!(s.machine_contests.len(), 1);
         assert_eq!(s.machine_contests[0].id, s.machines[0]);
-        assert_eq!(s.machine_contests[0].contests.len(), 2);
+        assert_eq!(s.machine_contests[0].contests.len(), 3);
+        assert_eq!(s.eligible, 120);
     }
+}
+
+#[test]
+fn starwars_contest_dtos_split_office_seat_and_place() {
+    let election = Sim::with_scenario_dto(1, "star-wars")
+        .expect("star-wars")
+        .election_dto();
+    let president = &election.contests[0];
+    assert_eq!(president.name, "Presidente");
+    assert_eq!(president.office, "Presidente");
+    assert_eq!(president.seat, None);
+    assert_eq!(president.place, None);
+    let option = &president.options[0];
+    assert_eq!(option.name, "Luke Skywalker");
+    assert_eq!(option.number.as_deref(), Some("10"));
+    assert_eq!(option.party.as_deref(), Some("Aliança Rebelde"));
+    assert_eq!(option.party_number.as_deref(), Some("10"));
+    assert_eq!(president.options[5].kind, "blank");
+    assert_eq!(president.options[5].party, None);
+
+    let senate = &election.contests[20];
+    assert_eq!(senate.name, "Senador \u{2014} Mandalore \u{2014} 2ª vaga");
+    assert_eq!(senate.office, "Senador");
+    assert_eq!(senate.seat.as_deref(), Some("2ª vaga"));
+    assert_eq!(senate.place.as_deref(), Some("Mandalore"));
+    assert_eq!(senate.link_group, Some(9));
+    let din = senate
+        .options
+        .iter()
+        .find(|o| o.name == "Din Djarin")
+        .expect("Din Djarin");
+    assert_eq!(din.number.as_deref(), Some("228"));
+    assert_eq!(din.party_number.as_deref(), Some("22"));
+}
+
+#[test]
+fn pilot_contest_dtos_use_the_name_as_office() {
+    let election = Sim::new(1).election_dto();
+    let governor = &election.contests[0];
+    assert_eq!(governor.office, "Governador");
+    assert_eq!(governor.seat, None);
+    assert_eq!(governor.place, None);
+    assert!(governor.options.iter().all(|o| o.party.is_none()));
 }
 
 #[test]
@@ -349,5 +394,25 @@ fn starwars_run_all_verifies_with_only_the_release_log_warning() {
         report.warnings
     );
     let result = report.result.expect("result");
-    assert_eq!(result.contests.len(), 11);
+    assert_eq!(result.contests.len(), 21);
+}
+
+#[test]
+fn starwars_result_sections_carry_final_bu_data() {
+    let mut sim = Sim::with_scenario_dto(17, "star-wars").expect("star-wars");
+    let result = sim.run_all_dto().expect("run_all");
+    assert_eq!(result.sections.len(), 10);
+    for s in &result.sections {
+        assert!(s.matches, "{}", s.section_id);
+        assert_eq!(s.eligible, 120);
+        assert_eq!(s.cast, 3);
+        assert_eq!(s.abstentions, 117);
+        assert_eq!(s.contests.len(), 3);
+        assert_eq!(s.pre_bu_fingerprint.matches('-').count(), 15);
+        let president = &s.contests[0];
+        assert_eq!(president.index, 0);
+        assert_eq!(president.counted, 3);
+        assert_eq!(president.votes.len(), 7);
+        assert_eq!(president.votes.iter().sum::<u64>(), 3);
+    }
 }

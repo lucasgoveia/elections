@@ -384,70 +384,151 @@ pub fn sample_registry(manifest: &Manifest, keys: &Keys) -> Registry {
     }
 }
 
-/// Planets of the Star Wars scenario: one section, one machine and one contest
-/// each. Each planet has four senator candidates.
-const PLANETS: [(&str, [&str; 4]); N_PLANETS] = [
+/// Parties of the Star Wars scenario: name and ballot number. Each candidate
+/// number starts with its party's number.
+const SW_PARTIES: [(&str, &str); 5] = [
+    ("Aliança Rebelde", "10"),
+    ("Ordem Jedi", "11"),
+    ("Wookiees Livres", "22"),
+    ("Império Galáctico", "66"),
+    ("Ordem Sith", "77"),
+];
+
+/// A Star Wars candidate: name, party index, and display number.
+type SwCandidate = (&'static str, u64, &'static str);
+
+/// Presidential candidates, one per party, numbered with the party's number.
+const SW_PRESIDENTS: [SwCandidate; 5] = [
+    ("Luke Skywalker", 0, "10"),
+    ("Obi-Wan Kenobi", 1, "11"),
+    ("Chewbacca", 2, "22"),
+    ("Palpatine", 3, "66"),
+    ("Darth Vader", 4, "77"),
+];
+
+/// Planets of the Star Wars scenario, each with four senate candidates from
+/// four different parties. Each planet elects two senators.
+const SW_PLANETS: [(&str, [SwCandidate; 4]); N_PLANETS] = [
     (
         "Tatooine",
-        ["Owen Lars", "Beru Lars", "Jabba the Hutt", "Bib Fortuna"],
+        [
+            ("Owen Lars", 0, "101"),
+            ("Beru Lars", 1, "112"),
+            ("Jabba the Hutt", 3, "661"),
+            ("Bib Fortuna", 4, "773"),
+        ],
     ),
     (
         "Naboo",
-        ["Padmé Amidala", "Jar Jar Binks", "Sio Bibble", "Boss Nass"],
+        [
+            ("Padmé Amidala", 0, "103"),
+            ("Jar Jar Binks", 3, "662"),
+            ("Sio Bibble", 1, "111"),
+            ("Boss Nass", 2, "221"),
+        ],
     ),
     (
         "Coruscant",
-        ["Mas Amedda", "Sly Moore", "Orn Free Taa", "Finis Valorum"],
+        [
+            ("Mas Amedda", 3, "663"),
+            ("Sly Moore", 4, "772"),
+            ("Orn Free Taa", 1, "113"),
+            ("Finis Valorum", 2, "223"),
+        ],
     ),
     (
         "Alderaan",
         [
-            "Bail Organa",
-            "Leia Organa",
-            "Breha Organa",
-            "Raymus Antilles",
+            ("Bail Organa", 0, "101"),
+            ("Leia Organa", 1, "112"),
+            ("Breha Organa", 2, "223"),
+            ("Raymus Antilles", 3, "664"),
         ],
     ),
     (
         "Kashyyyk",
-        ["Tarfful", "Attichitcuk", "Malla", "Lumpawarrump"],
+        [
+            ("Tarfful", 2, "221"),
+            ("Attichitcuk", 0, "102"),
+            ("Malla", 1, "113"),
+            ("Lumpawarrump", 3, "665"),
+        ],
     ),
     (
         "Corellia",
-        ["Han Solo", "Qi'ra", "Garris Shrike", "Wedge Antilles"],
+        [
+            ("Han Solo", 0, "103"),
+            ("Qi'ra", 4, "771"),
+            ("Garris Shrike", 3, "668"),
+            ("Wedge Antilles", 2, "224"),
+        ],
     ),
     (
         "Mon Cala",
-        ["Gial Ackbar", "Raddus", "Lee-Char", "Nossor Ri"],
+        [
+            ("Gial Ackbar", 0, "104"),
+            ("Raddus", 2, "223"),
+            ("Lee-Char", 3, "666"),
+            ("Nossor Ri", 4, "776"),
+        ],
     ),
-    ("Kamino", ["Lama Su", "Taun We", "Nala Se", "Ko Sai"]),
+    (
+        "Kamino",
+        [
+            ("Lama Su", 3, "667"),
+            ("Taun We", 0, "105"),
+            ("Nala Se", 1, "117"),
+            ("Ko Sai", 2, "226"),
+        ],
+    ),
     (
         "Endor",
-        ["Wicket W. Warrick", "Chief Chirpa", "Logray", "Teebo"],
+        [
+            ("Wicket W. Warrick", 0, "106"),
+            ("Chefe Chirpa", 2, "227"),
+            ("Logray", 1, "118"),
+            ("Teebo", 3, "669"),
+        ],
     ),
     (
         "Mandalore",
-        ["Bo-Katan Kryze", "Satine Kryze", "Pre Vizsla", "Din Djarin"],
+        [
+            ("Bo-Katan Kryze", 0, "107"),
+            ("Satine Kryze", 1, "119"),
+            ("Pre Vizsla", 4, "778"),
+            ("Din Djarin", 2, "228"),
+        ],
     ),
 ];
 
-/// Presidential candidates of the Star Wars scenario, with their display numbers.
-const PRESIDENTS: [(&str, &str); 5] = [
-    ("Luke Skywalker", "10"),
-    ("Palpatine", "66"),
-    ("Darth Vader", "77"),
-    ("Chewbacca", "22"),
-    ("Obi-Wan Kenobi", "11"),
-];
+/// Options of a single-seat contest: the candidates, each with its party, then
+/// "Branco" and "Nulo".
+fn starwars_options(candidates: &[SwCandidate]) -> Vec<BallotOption> {
+    let mut opts: Vec<BallotOption> = candidates
+        .iter()
+        .enumerate()
+        .map(|(i, &(name, party, num))| {
+            let mut o = option(i, name, OptionKind::Candidate, Some(num));
+            o.party_index = Some(party);
+            o
+        })
+        .collect();
+    let n = opts.len();
+    opts.push(option(n, "Branco", OptionKind::Blank, None));
+    opts.push(option(n + 1, "Nulo", OptionKind::Null, None));
+    opts
+}
 
 /// Builds the Star Wars manifest and its secret keys from `seed`.
 ///
-/// The election is "Galactic Republic General Election". Contest 0 is the
-/// President (single, homomorphic). Contests 1 to 10 are one senate race per
-/// planet (multi, homomorphic, L = 2), each offered by that planet's machine
-/// only. Three trustees (k = 2) sit in the blocs "jedi", "rebellion" and
-/// "banking". The EA is in the bloc "senate", and the two mirrors are in
-/// "press" and "civil". There are no parties, federations or link groups.
+/// The election is "Eleição Geral da República Galáctica", in Brazilian form.
+/// Contest 0 is the presidency: a single-seat contest with one candidate per
+/// party. Each planet then has two single-seat senate contests, "1ª vaga" and
+/// "2ª vaga", with identical options. Each pair is a link group, so a voter
+/// picks a given senate candidate at most once in total. Five parties are
+/// listed. Three trustees (k = 2) sit in the blocs "jedi", "rebelião" and
+/// "banco". The EA is in the bloc "senado", and the two mirrors are in "imprensa"
+/// and "civil".
 pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
     let mut rng = ChaCha20Rng::seed_from_u64(seed);
 
@@ -470,11 +551,11 @@ pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
 
     // Trustees and release signers: one bloc per organisation, so no bloc holds k.
     let trustee_names = [
-        "Jedi Council",
-        "Rebel Alliance",
-        "InterGalactic Banking Clan",
+        "Conselho Jedi",
+        "Aliança Rebelde",
+        "Clã Bancário Intergaláctico",
     ];
-    let blocs = ["jedi", "rebellion", "banking"];
+    let blocs = ["jedi", "rebelião", "banco"];
     let trustees = TrusteeSet {
         k: 2,
         trustees: (0..N_TRUSTEES)
@@ -488,52 +569,53 @@ pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
             .collect(),
     };
 
-    // Contest 0: the President. Candidates, then Blank and Null (no numbers).
-    let mut president_options: Vec<BallotOption> = PRESIDENTS
+    let parties: Vec<Party> = SW_PARTIES
         .iter()
         .enumerate()
-        .map(|(i, &(name, num))| option(i, name, OptionKind::Candidate, Some(num)))
+        .map(|(i, &(name, number))| Party {
+            index: i as u64,
+            name: name.to_owned(),
+            number: number.to_owned(),
+            key: None,
+        })
         .collect();
-    let n = president_options.len();
-    president_options.push(option(n, "Blank", OptionKind::Blank, None));
-    president_options.push(option(n + 1, "Null", OptionKind::Null, None));
 
+    // Contest 0: the presidency. Contests 2p-1 and 2p: the two senate seats of
+    // planet p (p = 1 to 10), with identical options.
     let mut contests = vec![contest(
         0,
-        "President of the Galactic Republic",
+        "Presidente",
         ContestKind::Single,
         Method::Homomorphic,
         1,
-        president_options,
+        starwars_options(&SW_PRESIDENTS),
     )];
-
-    // Contests 1 to 10: one senate race per planet. Candidate numbers are 101 to
-    // 104 for planet 1, 201 to 204 for planet 2, and so on up to 901 to 904.
-    // Planet 10 uses 111 to 114. Each contest has a Null option and no blank.
-    for (i, (planet, senators)) in PLANETS.iter().enumerate() {
-        let p = i as u64 + 1;
-        let base = if p == 10 { 110 } else { 100 * p };
-        let mut options = Vec::with_capacity(senators.len() + 1);
-        for (c, name) in senators.iter().enumerate() {
-            let num = (base + c as u64 + 1).to_string();
-            options.push(option(c, name, OptionKind::Candidate, Some(num.as_str())));
+    for (i, (planet, senators)) in SW_PLANETS.iter().enumerate() {
+        let first = 2 * i as u64 + 1;
+        for (seat, seat_name) in [(first, "1ª vaga"), (first + 1, "2ª vaga")] {
+            contests.push(contest(
+                seat,
+                &format!("Senador \u{2014} {planet} \u{2014} {seat_name}"),
+                ContestKind::Single,
+                Method::Homomorphic,
+                1,
+                starwars_options(senators),
+            ));
         }
-        options.push(option(senators.len(), "Null", OptionKind::Null, None));
-        contests.push(contest(
-            p,
-            &format!("Senator \u{2014} {planet}"),
-            ContestKind::Multi,
-            Method::Homomorphic,
-            2,
-            options,
-        ));
     }
+
+    let link_groups: Vec<LinkGroup> = (0..N_PLANETS)
+        .map(|i| LinkGroup {
+            index: i as u64,
+            contests: vec![2 * i as u64 + 1, 2 * i as u64 + 2],
+        })
+        .collect();
 
     let software_policy = SoftwarePolicy {
         signers: [
-            "Jedi Archives",
-            "Rebel Alliance Engineering",
-            "Banking Clan Audit",
+            "Arquivo Jedi",
+            "Engenharia da Aliança Rebelde",
+            "Auditoria do Clã Bancário",
         ]
         .iter()
         .enumerate()
@@ -550,10 +632,10 @@ pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
     };
 
     let manifest = Manifest {
-        election_id: "GALACTIC-REPUBLIC-GE-1".to_owned(),
-        title: "Galactic Republic General Election".to_owned(),
+        election_id: "REPUBLICA-GALACTICA-EG-1".to_owned(),
+        title: "Eleição Geral da República Galáctica".to_owned(),
         contests,
-        parties: Vec::new(),
+        parties,
         federations: Vec::new(),
         trustees,
         ea_key: ea.verifying_key(),
@@ -563,18 +645,18 @@ pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
             min_mixers: 2,
             min_region_rows: 1,
         },
-        link_groups: Vec::new(),
+        link_groups,
         min_section_ballots: 1,
-        ea_bloc: "senate".to_owned(),
+        ea_bloc: "senado".to_owned(),
         mirrors: vec![
             Mirror {
-                operator: "HoloNet News".to_owned(),
-                bloc: "press".to_owned(),
+                operator: "HoloNet Notícias".to_owned(),
+                bloc: "imprensa".to_owned(),
                 url: "https://holonet.example.org".to_owned(),
                 key: mirrors[0].verifying_key(),
             },
             Mirror {
-                operator: "Mos Eisley Cantina Watch".to_owned(),
+                operator: "Observatório da Cantina de Mos Eisley".to_owned(),
                 bloc: "civil".to_owned(),
                 url: "https://cantina-watch.example.org".to_owned(),
                 key: mirrors[1].verifying_key(),
@@ -600,28 +682,27 @@ pub fn starwars_manifest(seed: u64) -> (Manifest, Keys) {
 /// Builds the Star Wars registry for `manifest`, using the keys in `keys`.
 ///
 /// One section per planet, named after the planet, with region equal to the
-/// planet name. Each section has two poll workers, eligible 100 and
-/// max_sessions 2. Each planet has one machine "M-<Planet>" (spaces removed)
-/// offering contests 0 and its own contest. There is no reserve machine, since
-/// a reserve machine would need to serve a single section. There are two
-/// observers.
+/// planet name and eligible 120. Each section has two poll workers and
+/// max_sessions 2. Each planet has one machine "Urna-<Planeta>" (spaces removed)
+/// offering the presidency and its two senate contests. There is no reserve
+/// machine. There are two observers.
 pub fn starwars_registry(manifest: &Manifest, keys: &Keys) -> Registry {
-    let machines = PLANETS
+    let machines = SW_PLANETS
         .iter()
         .enumerate()
         .map(|(i, (planet, _))| MachineEntry {
-            machine_id: format!("M-{}", planet.replace(' ', "")),
+            machine_id: format!("Urna-{}", planet.replace(' ', "")),
             section_id: (*planet).to_owned(),
             key: keys.machines[i].verifying_key(),
-            contests: vec![0, i as u64 + 1],
+            contests: vec![0, 2 * i as u64 + 1, 2 * i as u64 + 2],
         })
         .collect();
-    let sections = PLANETS
+    let sections = SW_PLANETS
         .iter()
         .enumerate()
         .map(|(i, (planet, _))| SectionEntry {
             section_id: (*planet).to_owned(),
-            eligible: 100,
+            eligible: 120,
             poll_worker_keys: keys.poll_workers[2 * i..2 * i + 2]
                 .iter()
                 .map(SigningKey::verifying_key)
@@ -637,11 +718,11 @@ pub fn starwars_registry(manifest: &Manifest, keys: &Keys) -> Registry {
         sections,
         observers: vec![
             ObserverEntry {
-                organisation: "Senate observers".to_owned(),
+                organisation: "Observadores do Senado".to_owned(),
                 key: keys.observers[0].verifying_key(),
             },
             ObserverEntry {
-                organisation: "Civil society observers".to_owned(),
+                organisation: "Observadores da sociedade civil".to_owned(),
                 key: keys.observers[1].verifying_key(),
             },
         ],
@@ -667,16 +748,19 @@ mod tests {
     #[test]
     fn starwars_shape_matches_the_scenario() {
         let (manifest, keys) = starwars_manifest(2);
-        assert_eq!(manifest.contests.len(), 11);
-        assert_eq!(
-            manifest.contests[0].name,
-            "President of the Galactic Republic"
-        );
+        assert_eq!(manifest.election_id, "REPUBLICA-GALACTICA-EG-1");
+        assert_eq!(manifest.contests.len(), 21);
+        assert_eq!(manifest.contests[0].name, "Presidente");
         assert_eq!(manifest.contests[0].options.len(), 7);
-        assert_eq!(manifest.contests[0].options[5].name, "Blank");
-        assert_eq!(manifest.contests[0].options[6].name, "Null");
-        assert!(manifest.link_groups.is_empty());
-        assert!(manifest.parties.is_empty());
+        assert_eq!(manifest.contests[0].options[5].name, "Branco");
+        assert_eq!(manifest.contests[0].options[6].name, "Nulo");
+        assert_eq!(manifest.contests[1].name, "Senador — Tatooine — 1ª vaga");
+        assert_eq!(manifest.contests[2].name, "Senador — Tatooine — 2ª vaga");
+        assert_eq!(manifest.contests[20].name, "Senador — Mandalore — 2ª vaga");
+        assert_eq!(manifest.link_groups.len(), 10);
+        assert_eq!(manifest.link_groups[6].contests, [13, 14]);
+        assert_eq!(manifest.parties.len(), 5);
+        assert_eq!(manifest.parties[3].number, "66");
         assert_eq!(manifest.trustees.k, 2);
         assert_eq!(manifest.trustees.n(), 3);
 
@@ -684,15 +768,37 @@ mod tests {
         assert_eq!(registry.sections.len(), 10);
         assert_eq!(registry.machines.len(), 10);
         assert!(registry.machines.iter().all(|m| !m.section_id.is_empty()));
-        assert!(registry.machines.iter().all(|m| m.contests.len() == 2));
-        assert!(registry.machine("M-MonCala").is_some());
-        assert_eq!(manifest.contests[10].name, "Senator — Mandalore");
-        let planet10 = manifest.contest(10).expect("contest 10");
-        let numbers: Vec<_> = planet10
-            .options
-            .iter()
-            .filter_map(|o| o.number.as_deref())
-            .collect();
-        assert_eq!(numbers, ["111", "112", "113", "114"]);
+        assert!(registry.machines.iter().all(|m| m.contests.len() == 3));
+        let moncala = registry.machine("Urna-MonCala").expect("Urna-MonCala");
+        assert_eq!(moncala.contests, [0, 13, 14]);
+        assert_eq!(registry.section("Mon Cala").expect("section").eligible, 120);
+    }
+
+    #[test]
+    fn starwars_candidate_numbers_follow_their_party() {
+        let (manifest, _) = starwars_manifest(3);
+        for c in &manifest.contests[1..] {
+            let names: Vec<&str> = c.options.iter().map(|o| o.name.as_str()).collect();
+            assert_eq!(names.len(), 6, "{names:?}");
+            assert_eq!(c.options[4].name, "Branco", "{names:?}");
+        }
+        for (planet, senators) in &SW_PLANETS {
+            let mut parties: Vec<u64> = senators.iter().map(|s| s.1).collect();
+            parties.sort_unstable();
+            parties.dedup();
+            assert_eq!(parties.len(), 4, "{planet}: parties must be distinct");
+            let mut numbers: Vec<&str> = senators.iter().map(|s| s.2).collect();
+            numbers.sort_unstable();
+            numbers.dedup();
+            assert_eq!(numbers.len(), 4, "{planet}: numbers must be distinct");
+            for &(name, party, number) in senators {
+                let prefix = SW_PARTIES[party as usize].1;
+                assert_eq!(number.len(), 3, "{name}");
+                assert!(number.starts_with(prefix), "{name} {number} {prefix}");
+            }
+        }
+        for &(name, party, number) in &SW_PRESIDENTS {
+            assert_eq!(number, SW_PARTIES[party as usize].1, "{name}");
+        }
     }
 }
