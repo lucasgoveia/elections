@@ -19,5 +19,6 @@ pub mod registry;
 pub mod share_enc;
 pub mod shuffle;
 pub mod sign;
+pub mod tally;
 
 pub use error::Error;
