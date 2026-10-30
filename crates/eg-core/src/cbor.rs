@@ -244,6 +244,20 @@ pub fn decode(bytes: &[u8]) -> Result<Value, CborError> {
     Ok(value)
 }
 
+/// Decodes one deterministic data item from the start of `bytes` and returns
+/// it with the number of bytes it used. Bytes after the item are ignored.
+///
+/// The journal uses this to tell a torn final write from a damaged length
+/// field: a CBOR item carries its own length (§15.1).
+pub fn decode_prefix(bytes: &[u8]) -> Result<(Value, usize), CborError> {
+    let mut dec = Decoder {
+        input: bytes,
+        pos: 0,
+    };
+    let value = dec.item(0)?;
+    Ok((value, dec.pos))
+}
+
 struct Decoder<'a> {
     input: &'a [u8],
     pos: usize,

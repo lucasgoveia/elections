@@ -74,18 +74,6 @@ so the spec can be updated to match (or the code changed).
     share sets that fail; the verifier reports them separately through
     `combine`'s `rejected` list.
 
-17. **§16.4 imports aren't journaled.** The journal has no record for importing
-    a recovered package. After a restart the host must re-import before
-    `prepare_pre_bu`, or the pre-BU silently covers fewer ballots (the voter-roll
-    count on paper would expose it). The spec should add an `import` record.
-
-18. **§15.1 torn tail vs a damaged length field.** A damaged length prefix in a
-    middle frame that points past the end looks exactly like a torn final
-    write, so the frames after it are dropped without an error. On a live
-    machine this could silently lose cast ballots. Mitigations: compare both
-    journal media on restart, or add a per-frame length check (e.g. repeat the
-    length after the record).
-
 19. **§12.6 judging order for a section tally.** The machine judges imported
     recovered ballots first (import order), then its own cast ballots (journal
     order), with one reservation set. The verifier must use the same order;
@@ -100,10 +88,6 @@ so the spec can be updated to match (or the code changed).
     builds no final BU for such a section and uses the all-zero digest as
     `section_result` field 3. The spec should allow an empty final BU or say
     that field 3 is absent.
-
-22. **§16.4 double import.** If two pre-BUs list the same recovered package,
-    both section tallies cover its ballots and the totals double count. The
-    spec should forbid it (and the verifier report it).
 
 23. **§19.2 mix share sets and their target.** The target digest of a final
     mix list is the RecordId of the last `mix_output`. The result assembly
@@ -134,3 +118,23 @@ so the spec can be updated to match (or the code changed).
     aren't re-checked in step 7 (the journal checker enforces them); step 16's
     "published nothing" covers observer certificates only, not mirror heads or
     trustee messages; steps 7, 10, 12, 13 and 14 have no tamper tests.
+
+## Resolved
+
+17. **§16.4 imports aren't journaled.** Resolved: the spec now has an `import`
+    journal record (§15.2). The checker requires pre-BU field 6 to equal the
+    journaled imports, and a restarted machine refuses the pre-BU until the
+    host re-imports them in journal order (`machine.rs`,
+    `imports_are_journaled_and_must_be_reloaded_after_a_restart`).
+
+18. **§15.1 torn tail vs a damaged length field.** Resolved without a format
+    change: when a length points past the end, the reader decodes the CBOR
+    record behind it by its own length. A complete record with a matching
+    frame digest means the length is damaged, and the journal is refused
+    (`journal.rs`, `damaged_middle_length_is_not_mistaken_for_a_torn_tail`).
+
+22. **§16.4 double import.** Resolved: §17.6 rule 10 makes the board reject a
+    package whose journal imports a recovered package another session already
+    imported. The verifier's step 7 still reports double imports from a board
+    that breaks the rule (`machine.rs`,
+    `recovered_package_is_imported_and_counted_in_the_pre_bu`).

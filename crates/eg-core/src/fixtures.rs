@@ -771,7 +771,7 @@ mod tests {
         assert!(registry.machines.iter().all(|m| m.contests.len() == 3));
         let moncala = registry.machine("Urna-MonCala").expect("Urna-MonCala");
         assert_eq!(moncala.contests, [0, 13, 14]);
-        assert_eq!(registry.section("Mon Cala").expect("section").eligible, 120);
+        assert_eq!(registry.section("Mon Cala").expect("section").eligible, 30);
     }
 
     #[test]

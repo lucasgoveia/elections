@@ -457,6 +457,9 @@ pub enum Record {
         chain_head: [u8; 32],
         sig: Signature,
     },
+    /// A recovered package imported into this session (§16.4). Journaled so
+    /// that a restarted machine knows which packages its pre-BU must cover.
+    Import(Imported),
     /// The pre-BU with its section signatures (§16.2).
     PreBuSigned {
         pre_bu: Value,
@@ -535,6 +538,11 @@ impl Record {
                 (3, Value::from(*frame_digest)),
                 (4, Value::from(*chain_head)),
                 (5, signature_to_value(sig)),
+            ]),
+            Record::Import(imported) => record(vec![
+                (0, Value::from("import")),
+                (1, Value::Uint(VERSION)),
+                (2, imported.to_value()),
             ]),
             Record::PreBuSigned { pre_bu, sigs } => record(vec![
                 (0, Value::from("pre_bu_signed")),
@@ -641,6 +649,11 @@ impl Record {
                     sig: signature_from_value(f[5])?,
                 }
             }
+            "import" => {
+                let f = record_fields(v, tag, 3)?;
+                expect_version(f[1])?;
+                Record::Import(Imported::from_value(f[2])?)
+            }
             "pre_bu_signed" => {
                 let f = record_fields(v, tag, 4)?;
                 expect_version(f[1])?;
@@ -677,6 +690,22 @@ pub fn frame_digest(prev: &[u8; 32], record_bytes: &[u8]) -> [u8; 32] {
         FRAME_TAG,
         &[Value::from(*prev), Value::Bytes(record_bytes.to_vec())],
     )
+}
+
+/// True if `bytes[at..]` starts with a complete CBOR record followed by its
+/// 32-byte frame digest under `prev`. A CBOR item carries its own length, so
+/// this works without trusting the frame's length field.
+fn intact_record_at(bytes: &[u8], at: usize, prev: &[u8; 32]) -> bool {
+    let Some(rest) = bytes.get(at..) else {
+        return false;
+    };
+    let Ok((_, used)) = cbor::decode_prefix(rest) else {
+        return false;
+    };
+    let Some(stored) = rest.get(used..used + 32) else {
+        return false;
+    };
+    stored == frame_digest(prev, &rest[..used])
 }
 
 /// An in-memory journal. Keeps the CBOR of each record and its frame digest,
@@ -752,8 +781,8 @@ impl Journal {
     /// Parses framed bytes and verifies each frame digest.
     ///
     /// A truncated final frame (a torn write) is dropped and reported through
-    /// the returned flag. Any other damage (bad digest, malformed record) is an
-    /// error.
+    /// the returned flag. Any other damage (bad digest, malformed record, a
+    /// damaged length field in front of an intact record) is an error.
     pub fn from_bytes(bytes: &[u8]) -> Result<(Journal, bool), Error> {
         let mut journal = Journal::new();
         let mut pos = 0usize;
@@ -767,6 +796,15 @@ impl Journal {
                 return Err(journal_err(format!("record {idx}: frame length overflows")));
             };
             let Some(frame) = bytes.get(pos..end) else {
+                // The frame runs past the end. That is a torn final write only
+                // if the record behind the length field is itself incomplete.
+                // A complete record with a matching digest means the length
+                // field is damaged, and the frames after it would be lost.
+                if intact_record_at(bytes, pos + 4, &journal.last_digest()) {
+                    return Err(journal_err(format!(
+                        "record {idx}: length field is damaged; the record behind it is intact"
+                    )));
+                }
                 return Ok((journal, true));
             };
             let body = &frame[4..4 + n];
@@ -828,6 +866,8 @@ pub struct JournalSummary {
     pub abandoned: u64,
     /// Explicit cancellations, plus unused authorizations of a recovered journal.
     pub cancelled: u64,
+    /// Recovered packages imported into the session, in journal order (§16.4).
+    pub imports: Vec<Imported>,
     pub pre_bu: Option<PreBu>,
     /// True if the journal ends with the full §15.4 ending.
     pub complete: bool,
@@ -852,6 +892,7 @@ struct Checker<'a> {
     /// Set after a record that must be followed by a checkpoint.
     need_checkpoint: bool,
     pre_bu: Option<PreBu>,
+    imports: Vec<Imported>,
     closed: bool,
     authorizations: u64,
     cast: u64,
@@ -874,6 +915,7 @@ impl<'a> Checker<'a> {
             pending: None,
             need_checkpoint: false,
             pre_bu: None,
+            imports: Vec::new(),
             closed: false,
             authorizations: 0,
             cast: 0,
@@ -965,6 +1007,7 @@ impl<'a> Checker<'a> {
                 chain_head,
                 sig,
             } => self.on_checkpoint(i, journal, *count, *frame_digest, *chain_head, sig),
+            Record::Import(imported) => self.on_import(i, imported),
             Record::PreBuSigned { pre_bu, sigs } => self.on_pre_bu(i, journal, pre_bu, sigs),
             Record::SessionClose {
                 authorizations,
@@ -1187,6 +1230,18 @@ impl<'a> Checker<'a> {
         Ok(())
     }
 
+    fn on_import(&mut self, i: usize, imported: &Imported) -> Result<(), Error> {
+        if self
+            .imports
+            .iter()
+            .any(|x| x.package_id == imported.package_id)
+        {
+            return fail(i, "recovered package is imported twice");
+        }
+        self.imports.push(imported.clone());
+        Ok(())
+    }
+
     fn on_pre_bu(
         &mut self,
         i: usize,
@@ -1219,6 +1274,9 @@ impl<'a> Checker<'a> {
         let counts = [self.authorizations, self.cast, self.spoiled, self.abandoned];
         if [pb.authorizations, pb.cast, pb.spoiled, pb.abandoned] != counts {
             return fail(i, "pre_bu counts do not match the journal");
+        }
+        if pb.imported != self.imports {
+            return fail(i, "pre_bu imports differ from the imports in the journal");
         }
         if !sigs
             .iter()
@@ -1285,6 +1343,7 @@ impl<'a> Checker<'a> {
             spoiled: self.spoiled,
             abandoned: self.abandoned,
             cancelled,
+            imports: self.imports,
             pre_bu: self.pre_bu,
             complete: self.complete,
         })
@@ -2006,6 +2065,36 @@ mod tests {
             assert!(torn, "cut at {cut}");
             assert_eq!(back.records(), &recs[..n - 1]);
         }
+    }
+
+    #[test]
+    fn damaged_middle_length_is_not_mistaken_for_a_torn_tail() {
+        // Spec issue 18: a length field in a middle frame damaged so that it
+        // points past the end used to read as a torn final write, silently
+        // dropping every later frame.
+        let w = world();
+        let j = Journal::from_records(happy(&w));
+        let mut bytes = j.to_bytes();
+        let off = frame_offset(&j, 5);
+        bytes[off..off + 4].copy_from_slice(&u32::MAX.to_be_bytes());
+        match Journal::from_bytes(&bytes) {
+            Err(Error::Journal(msg)) => assert!(msg.contains("length field"), "{msg}"),
+            other => panic!("expected a damaged-length error, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn torn_tail_with_a_complete_record_but_short_digest_is_still_torn() {
+        let w = world();
+        let recs = happy(&w);
+        let n = recs.len();
+        let j = Journal::from_records(recs.clone());
+        let bytes = j.to_bytes();
+        // The last record's CBOR is complete, only 10 of its 32 digest bytes landed.
+        let cut = frame_offset(&j, n - 1) + 4 + j.bytes[n - 1].len() + 10;
+        let (back, torn) = Journal::from_bytes(&bytes[..cut]).expect("torn tail");
+        assert!(torn);
+        assert_eq!(back.records(), &recs[..n - 1]);
     }
 
     #[test]

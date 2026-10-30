@@ -13,9 +13,10 @@
 //! [`journal::check_journal`]. Recovered packages of dead machines (§16.4) are
 //! imported with [`Session::import_recovered`].
 //!
-//! Recovered imports are not journaled, because the journal format has no
-//! record for them. After a restart the host must import them again before
-//! [`Session::prepare_pre_bu`]. See the report on the spec ambiguity.
+//! Each import is journaled as an `import` record (§16.4). The journal keeps
+//! only the package's RecordId, cast count and last head, not its ballots, so
+//! after a restart the host must import the same packages again, in the same
+//! order, before [`Session::prepare_pre_bu`] will run.
 
 use rand_core::{CryptoRng, RngCore};
 use zeroize::Zeroizing;
@@ -110,6 +111,9 @@ pub struct Session<'a> {
     imports: Vec<Imported>,
     /// Cast ballots of the imported packages, in import order.
     imported_ballots: Vec<Ballot>,
+    /// Imports recorded in the journal. `imports` is always a prefix of it; it
+    /// is shorter only after a restart, until the host imports them again.
+    journaled_imports: Vec<Imported>,
     /// The pre-BU built by `prepare_pre_bu`, waiting for its signatures. Any
     /// journal append clears it, so a stale pre-BU can't be signed.
     prepared: Option<Value>,
@@ -192,6 +196,7 @@ impl<'a> Session<'a> {
             abandoned: 0,
             imports: Vec::new(),
             imported_ballots: Vec::new(),
+            journaled_imports: Vec::new(),
             prepared: None,
             pre_bu_signed: false,
             closed: false,
@@ -420,6 +425,9 @@ impl<'a> Session<'a> {
     /// before [`Session::prepare_pre_bu`].
     pub fn import_recovered(&mut self, recovered: &Value) -> Result<(), Error> {
         self.ensure_open()?;
+        if self.pre_bu_signed {
+            return Err(journal_err("the pre-BU is already signed: no more imports"));
+        }
         let rp = RecoveredPackage::from_value(recovered)?;
         let registry: &'a Registry = self.cfg.registry;
         let section = self.section()?;
@@ -488,11 +496,28 @@ impl<'a> Session<'a> {
                 _ => {}
             }
         }
-        self.imports.push(Imported {
+        let imported = Imported {
             package_id,
             cast: summary.cast,
             last_head: summary.final_head,
-        });
+        };
+        // After a restart the journal already lists some imports: they must be
+        // re-imported first, in journal order, and are not journaled again.
+        let k = self.imports.len();
+        match self.journaled_imports.get(k) {
+            Some(expected) if *expected == imported => {}
+            Some(_) => {
+                return Err(journal_err(format!(
+                    "the journal records a different recovered package as import {}: import that one first",
+                    k + 1
+                )))
+            }
+            None => {
+                self.append(Record::Import(imported.clone()));
+                self.journaled_imports.push(imported.clone());
+            }
+        }
+        self.imports.push(imported);
         self.imported_ballots.extend(ballots);
         self.prepared = None;
         Ok(())
@@ -515,6 +540,13 @@ impl<'a> Session<'a> {
         if let Some(seq) = self.unused {
             return Err(journal_err(format!(
                 "authorization {seq} is unused: cancel it before the pre-BU"
+            )));
+        }
+        if self.imports.len() < self.journaled_imports.len() {
+            return Err(journal_err(format!(
+                "the journal records {} recovered imports and {} are loaded: import the rest again before the pre-BU",
+                self.journaled_imports.len(),
+                self.imports.len()
             )));
         }
         let offered = self.offered()?;
@@ -696,6 +728,7 @@ impl<'a> Session<'a> {
                     s.head = next_head(code, Status::Abandoned, None);
                 }
                 Record::Checkpoint { .. } => {}
+                Record::Import(imported) => s.journaled_imports.push(imported.clone()),
                 Record::PreBuSigned { .. } => s.pre_bu_signed = true,
                 Record::SessionClose { .. } => s.closed = true,
             }
@@ -1430,6 +1463,63 @@ mod tests {
         assert_eq!(board.ingest(&pkg), Ingest::Accepted);
         let kinds: Vec<PackageKind> = board.accepted_packages().iter().map(|p| p.kind).collect();
         assert_eq!(kinds, vec![PackageKind::Recovered, PackageKind::Package]);
+
+        // Spec issue 22: a second session importing the same recovered package
+        // would count its ballots twice. The board refuses it (§17.6 rule 10).
+        let mut r2 = open_signed(&w, 2, RESERVE, "S-R2");
+        r2.import_recovered(&rec_value).expect("the machine itself cannot know");
+        vote(&mut r2, &w, RESERVE, 0);
+        let (_, pkg2) = finish(&mut r2, &w, 3);
+        match board.ingest(&pkg2) {
+            Ingest::Rejected(reason) => assert!(reason.contains("rule 10"), "{reason}"),
+            Ingest::Accepted => panic!("a double import was accepted"),
+        }
+    }
+
+    #[test]
+    fn imports_are_journaled_and_must_be_reloaded_after_a_restart() {
+        // Spec issue 17: imports used to live only in memory, so a restart
+        // before the pre-BU silently dropped the dead machine's ballots.
+        let w = world(1);
+        let mut a = open_signed(&w, 0, MACHINE, "S-A");
+        vote(&mut a, &w, MACHINE, 0);
+        let mut rp = build_recovered(
+            &a.journal().clone(),
+            &w.ctx.hash(),
+            MACHINE,
+            SECTION,
+            "S-A",
+            APPROVED,
+            2,
+        )
+        .expect("recovered");
+        rp.add_sig(&w.keys.poll_workers[1]);
+        let rec_value = rp.to_value();
+
+        let mut r = open_signed(&w, 2, RESERVE, "S-R");
+        r.import_recovered(&rec_value).expect("import");
+        vote(&mut r, &w, RESERVE, 2);
+        let imports = |s: &Session| {
+            s.journal()
+                .records()
+                .iter()
+                .filter(|x| matches!(x, Record::Import(_)))
+                .count()
+        };
+        assert_eq!(imports(&r), 1, "the import is journaled");
+        let before = r.prepare_pre_bu(2).expect("pre-BU before the crash");
+
+        // Crash and restart: the pre-BU is refused until the package is loaded again.
+        let bytes = r.journal().to_bytes();
+        let (mut r2, _) = Session::restart(w.cfg(2, RESERVE), &bytes).expect("restart");
+        match r2.prepare_pre_bu(2) {
+            Err(Error::Journal(msg)) => assert!(msg.contains("import"), "{msg}"),
+            other => panic!("expected a missing-import error, got {other:?}"),
+        }
+        r2.import_recovered(&rec_value).expect("re-import");
+        assert_eq!(imports(&r2), 1, "re-importing does not journal it again");
+        assert_eq!(r2.prepare_pre_bu(2).expect("pre-BU after restart"), before);
+        assert!(r2.import_recovered(&rec_value).is_err(), "no double import");
     }
 
     #[test]

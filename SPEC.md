@@ -1035,6 +1035,8 @@ frame = u32_be(length) || CBOR(record) || Digest("eg/v1/journal", prev_frame_dig
 
 The first frame's `prev_frame_digest` is 32 zero bytes. The frame digest chains every record, including authorizations.
 
+A reader MUST NOT trust the length prefix alone to decide that a frame is a torn final write. If the length points past the end of the file, the reader decodes the CBOR item that follows the prefix by its own encoding (a CBOR item carries its own length). If that item is complete and the 32 bytes after it equal its frame digest, the length prefix is damaged, not torn, and the journal MUST be treated as damaged (§15.4). Otherwise every frame after it would be dropped silently.
+
 The machine MUST `fsync` (or the platform equivalent) the journal after each record and before showing anything to the voter that depends on it. In particular the code is synced before it is displayed, and the cast record is synced before the slip is printed.
 
 ### 15.2 Records
@@ -1042,7 +1044,7 @@ The machine MUST `fsync` (or the platform equivalent) the journal after each rec
 ```cddl
 journal_record = session_open / zeresima_signed / authorization / ballot_committed / ballot_cast
                / ballot_spoiled / ballot_abandoned / authorization_cancelled / checkpoint
-               / pre_bu_signed / session_close
+               / import / pre_bu_signed / session_close
 
 session_open = { 0: "session_open", 1: 1, 2: digest, 3: tstr, 4: tstr, 5: tstr, 6: software_measurement, 7: uint, 8: bstr .size 16, ? 9: attestation }
   ; context_hash, machine_id, section_id, session_id, measurement, opened_at (Unix seconds),
@@ -1056,6 +1058,9 @@ ballot_spoiled = { 0: "spoiled", 1: 1, 2: digest, 3: reveal }       ; code, reve
 ballot_abandoned = { 0: "abandoned", 1: 1, 2: digest }              ; code
 authorization_cancelled = { 0: "auth_cancel", 1: 1, 2: uint, 3: ed25519pk, 4: ed25519sig }
   ; auth_seq being cancelled, poll worker key, signature (below)
+import = { 0: "import", 1: 1, 2: imported }
+  ; a recovered package imported into this session (§16.4); `imported` is pre-BU field 6's item:
+  ; [RecordId(recovered_package), its cast count, its last chain head]
 checkpoint = { 0: "checkpoint", 1: 1, 2: uint, 3: digest, 4: digest, 5: ed25519sig }
   ; number of records before this one, frame digest of the previous record, current chain head,
   ; Sign(machine_sk, "eg/v1/sig/checkpoint", [context_hash, machine_id, session_id, fields 2..4])
@@ -1088,6 +1093,7 @@ A machine therefore can't create authorizations for itself, and it can't cancel 
 - At most one authorization is unused at any time. A new `authorization` MUST NOT be journaled until the previous one has been consumed by a `cast` or cancelled. This limits a machine that records a voter's CAST as "spoiled" to using the freed authorization before the next voter arrives, and the voter's signed slip then proves the relabelling (§28.20).
 - A `checkpoint` follows every `zeresima_signed`, `cast`, `spoiled`, `abandoned` and `pre_bu_signed` record, with correct record count, frame digest and chain head.
 - The journal ends with `pre_bu_signed`, its checkpoint and `session_close`. The pre-BU's counts, frame digest and chain head match the journal, its fingerprint matches the section tally recomputed from the journal and its imports (§18.1), and it carries at least one valid poll worker signature of the section.
+- Each `import` names a different recovered package, appears before `pre_bu_signed`, and never between a `committed` ballot and its status. The pre-BU's field 6 equals the `import` records, in journal order.
 - At `session_close`: authorizations = cast + `auth_cancel` count.
 - A machine has at most `max_sessions` sessions (§7.7) on the board.
 - On restart, the machine replays the journal and verifies the frame chain:
@@ -1095,6 +1101,7 @@ A machine therefore can't create authorizations for itself, and it can't cancel 
   - A `cast`, `spoiled` or `abandoned` record with no checkpoint after it (a crash in between) gets its checkpoint appended now. For a `cast`, the slip was never printed, so the machine prints it now, marked as a reprint. The signed slip is byte-identical to the original, since Ed25519 signatures are deterministic.
   - Any other damage is fatal, and the machine MUST refuse to continue the session.
   - A `committed` ballot with no following `cast` or `spoiled` record becomes **abandoned**. The machine erases ρ without revealing it, because the voter may have meant to cast it. It then appends `ballot_abandoned` and records the status `"abandoned"` in the chain (§13.1). An abandoned ballot is never tallied and does not consume an authorization. `session_close` counts it in field 5.
+  - The journal records which recovered packages were imported, but not their ballots. The host MUST import the same packages again, in journal order, before the machine prepares the pre-BU, and the machine MUST refuse the pre-BU until it has.
   - After an abandoned ballot, the poll worker decides whether the voter votes again under the same authorization or whether to cancel it with a signed `auth_cancel`. The machine MUST NOT cancel on its own.
 
 ### 15.5 Zerésima
@@ -1276,7 +1283,7 @@ recovered_package = {
   1. the section's cast total, A's import plus B's own, falls short of the voter-roll count on the paper pre-BU, which is visible at the section,
   2. A's voters after the cut hold signed slips whose codes are missing from the board,
   3. a medium that turns up later with a further valid checkpoint proves the cut.
-- **Import.** The replacement machine imports the recovered package, verifies its last checkpoint, and lists it in its pre-BU field 6. The section's encrypted subtotal then covers both machines, and **one pre-BU covers the whole section**. This is the encrypted counterpart of moving today's memory card to the contingency urna. No plaintext is needed, because the boxes are added while locked.
+- **Import.** The replacement machine imports the recovered package, verifies its last checkpoint, journals an `import` record (§15.2) and lists it in its pre-BU field 6. A recovered package is imported by one pre-BU only (§17.6 rule 10). The section's encrypted subtotal then covers both machines, and **one pre-BU covers the whole section**. This is the encrypted counterpart of moving today's memory card to the contingency urna. No plaintext is needed, because the boxes are added while locked.
 - A recovered package that no pre-BU imports is still counted. Its cast ballots go into the pool (§18.2), and the verifier reports it.
 
 ### 16.5 Final BU
@@ -1378,6 +1385,7 @@ The board MUST validate each package before appending it, and verifiers re-check
 7. The invariants of §15.4 hold, including the poll worker signatures on every authorization and cancellation.
 8. Ballot proof failures (§12.6) do **not** reject the package. They exclude the affected ballot or contests and are reported, because rejecting the package would discard every honest voter's ballot on that machine. The package itself is evidence against the machine.
 9. No `(machine_id, session_id)` pair is already on the board, and the machine has no more than `max_sessions` packages.
+10. No recovered package that the journal imports is already imported by another session on the board. Otherwise its ballots would be counted in two section tallies. A package that supersedes a recovered package of the same session may repeat that session's imports.
 
 A board that rejects a package MUST publish the rejection reason as a signed `rejection` entry, so that a dropped package is visible:
 

@@ -603,6 +603,9 @@ pub struct BoardState<'a> {
     sessions: HashMap<(String, String), usize>,
     /// Sessions counted against each machine's `max_sessions` (§17.6 rule 9).
     sessions_per_machine: HashMap<String, u64>,
+    /// Recovered packages already imported, by RecordId, with the session that
+    /// imported them (§17.6 rule 10).
+    imported_by: HashMap<[u8; 32], (String, String)>,
     packages: Vec<AcceptedPackage>,
     attestations: Vec<AcceptedAttestation>,
 }
@@ -624,6 +627,7 @@ impl<'a> BoardState<'a> {
             revoked: HashSet::new(),
             sessions: HashMap::new(),
             sessions_per_machine: HashMap::new(),
+            imported_by: HashMap::new(),
             packages: Vec::new(),
             attestations: Vec::new(),
         }
@@ -1080,6 +1084,22 @@ impl<'a> BoardState<'a> {
                     ));
                 }
             }
+        }
+        // Rule 10: a recovered package is covered by one pre-BU only, or its
+        // ballots would be counted twice (spec issue 22). A package that
+        // supersedes a recovered one of the same session may repeat its imports.
+        for imp in &summary.imports {
+            if let Some(owner) = self.imported_by.get(&imp.package_id) {
+                if *owner != pair {
+                    return Err(board_err(format!(
+                        "§17.6 rule 10: recovered package already imported by machine {} session {}",
+                        owner.0, owner.1
+                    )));
+                }
+            }
+        }
+        for imp in &summary.imports {
+            self.imported_by.insert(imp.package_id, pair.clone());
         }
         if let Some(prev) = superseded {
             self.packages[prev].superseded = true;
