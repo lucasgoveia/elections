@@ -14,6 +14,7 @@ pub mod error;
 pub mod fixtures;
 pub mod group;
 pub mod hash;
+pub mod journal;
 pub mod manifest;
 pub mod proofs;
 pub mod registry;
