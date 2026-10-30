@@ -66,11 +66,11 @@ function toySomar(root: HTMLElement) {
     const gm = (total.b * powmod(total.a, Q - secret, P)) % P;
     let m = 0;
     while (m <= boxes.length && powmod(G, m, P) !== gm) m += 1;
-    const luke = m;
-    const vader = boxes.length - m;
+    const a = m;
+    const b = boxes.length - m;
     out.innerHTML =
       `Caixa do total: (${total.a}, ${total.b}), o produto das caixas, número a número, módulo ${P}.<br>` +
-      `Aberta com a chave: <strong>Luke ${luke}, Vader ${vader}</strong>. Nenhuma caixa individual foi aberta.`;
+      `Aberta com a chave: <strong>candidato A ${a}, candidato B ${b}</strong>. Nenhuma caixa individual foi aberta.`;
   });
 
   root.querySelector<HTMLButtonElement>('[data-acao="limpar"]')!.addEventListener('click', () => {
@@ -86,7 +86,7 @@ function toySomar(root: HTMLElement) {
 // -- II. the hidden line -----------------------------------------------------------
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const NAMES: Record<number, string> = { 1: 'Conselho Jedi', 2: 'Aliança Rebelde', 3: 'Clã Bancário' };
+const NAMES: Record<number, string> = { 1: 'Guardião 1', 2: 'Guardião 2', 3: 'Guardião 3' };
 
 function el(tag: string, attrs: Record<string, string | number>, text?: string): SVGElement {
   const node = document.createElementNS(SVG_NS, tag);
@@ -347,7 +347,7 @@ function toyCorrente(root: HTMLElement) {
 
   const render = async () => {
     // head_0 comes from the zerésima; each code hashes the previous head and the box.
-    let head = await sha256Hex('zerésima · Urna-Tatooine');
+    let head = await sha256Hex('zerésima · urna 1');
     const now: string[] = [];
     for (const input of inputs) {
       head = await sha256Hex(head + input.value);

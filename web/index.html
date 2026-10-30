@@ -54,7 +54,7 @@
         <p>
           Tudo aqui é explicado sem fórmulas. Quem quiser as fórmulas e as provas encontra na página
           <a href="./tecnico.html">Técnico</a>. Quem quiser apertar os botões vai à <a href="./oficina.html">Oficina</a>,
-          onde roda uma eleição inteira da República Galáctica no próprio navegador. As dúvidas mais comuns estão no
+          onde roda uma eleição inteira de exemplo no próprio navegador. As dúvidas mais comuns estão no
           fim desta página, em <a href="#duvidas">Dúvidas frequentes</a>.
         </p>
       </section>
@@ -225,8 +225,8 @@
             caixas e abra só o total. As contas são de verdade, com números pequenos.
           </p>
           <div class="fila">
-            <button type="button" class="botao" data-voto="1">Votar em Luke</button>
-            <button type="button" class="botao" data-voto="0">Votar em Vader</button>
+            <button type="button" class="botao" data-voto="1">Votar no candidato A</button>
+            <button type="button" class="botao" data-voto="0">Votar no candidato B</button>
             <button type="button" class="botao botao-forte" data-acao="somar" disabled>Juntar e abrir o total</button>
             <button type="button" class="botao" data-acao="limpar">Recomeçar</button>
           </div>
@@ -250,8 +250,8 @@
 
         <p class="capitular">
           A chave que abre as caixas nunca existe inteira em lugar nenhum. Ela nasce repartida entre alguns
-          <em>guardiões</em>, que são organizações diferentes. Na eleição de exemplo são três: o Conselho Jedi, a Aliança
-          Rebelde e o Clã Bancário Intergaláctico. Num caso real seriam, por exemplo, o TSE, a OAB, uma universidade e
+          <em>guardiões</em>, que são organizações diferentes. Nos exemplos desta página são três, chamados de guardião 1,
+          2 e 3. Num caso real seriam, por exemplo, o TSE, a OAB, uma universidade e
           partidos de lados opostos.
         </p>
         <aside class="nota">
@@ -274,9 +274,9 @@
           <h4>Experimente: a reta escondida</h4>
           <p class="instr">Escolha quais guardiões aparecem. Com um só, veja quantas retas cabem. Com dois, a reta aparece.</p>
           <div class="fila" role="group" aria-label="Guardiões presentes">
-            <button type="button" class="botao" data-g="1" aria-pressed="true">Conselho Jedi</button>
-            <button type="button" class="botao" data-g="2" aria-pressed="false">Aliança Rebelde</button>
-            <button type="button" class="botao" data-g="3" aria-pressed="false">Clã Bancário</button>
+            <button type="button" class="botao" data-g="1" aria-pressed="true">Guardião 1</button>
+            <button type="button" class="botao" data-g="2" aria-pressed="false">Guardião 2</button>
+            <button type="button" class="botao" data-g="3" aria-pressed="false">Guardião 3</button>
             <button type="button" class="botao" data-acao="nova">Sortear outra reta</button>
           </div>
           <svg class="desenho" viewBox="0 0 520 300" role="img" aria-label="Gráfico da reta e dos pontos dos guardiões" data-plot></svg>
@@ -306,7 +306,7 @@
 
         <p class="capitular">
           As caixas trancadas trazem um perigo. Se ninguém vê o que tem dentro, uma urna desonesta poderia trancar o
-          número 500 numa caixa do Vader. Ao somar, o Vader ganharia 500 votos de uma vez, e ninguém perceberia.
+          número 500 numa caixa do candidato B. Ao somar, o candidato B ganharia 500 votos de uma vez, e ninguém perceberia.
         </p>
         <p>
           Então cada caixa precisa vir com uma prova de que guarda 0 ou 1. Parece pedir o impossível: convencer
@@ -486,7 +486,7 @@
         </p>
         <p>
           O que nenhuma dessas provas garante é que o 1 está no candidato que <em>você</em> digitou. Uma urna adulterada
-          pode trancar Vader quando você escolheu Luke, com provas perfeitas de que a caixa tem um voto só. Para isso
+          pode trancar o candidato B quando você escolheu o candidato A, com provas perfeitas de que a caixa tem um voto só. Para isso
           existe o próximo capítulo.
         </p>
       </section>
@@ -501,7 +501,7 @@
 
         <p class="capitular">
           As provas do capítulo anterior garantem que a caixa tem um voto válido. Elas não garantem que é o voto
-          que <em>você</em> escolheu. Uma urna adulterada poderia trancar Vader quando você digitou Luke, com uma prova
+          que <em>você</em> escolheu. Uma urna adulterada poderia trancar o candidato B quando você digitou o candidato A, com uma prova
           perfeita de que a caixa tem um voto só.
         </p>
         <p>
@@ -968,7 +968,7 @@
             <div class="resposta">
               <p>
                 Um pouco. As somas de cada seção podem ser abertas na noite da eleição, assim que os pacotes chegam. O
-                que custa mais é gerar e conferir as provas: na Oficina, uma eleição de dez planetas é apurada e
+                que custa mais é gerar e conferir as provas: na Oficina, uma eleição de exemplo com dez seções é apurada e
                 verificada em segundos, mas uma eleição nacional, com centenas de milhares de seções, exige
                 computadores dedicados e provas agrupadas.
               </p>
@@ -981,16 +981,6 @@
                 A urna grava um diário encadeado, como o colar do capítulo V, em duas mídias. Ao religar, ela relê o
                 diário e continua de onde parou. Se a urna quebrar de vez, uma urna de reserva assume a seção, e os votos
                 da urna quebrada são recuperados da mídia e importados no pré-boletim da reserva.
-              </p>
-            </div>
-          </details>
-          <details>
-            <summary>Por que Star Wars?</summary>
-            <div class="resposta">
-              <p>
-                Para ninguém confundir um exemplo com uma opinião política. A eleição da República Galáctica segue as
-                regras brasileiras (presidente com segundo turno, duas vagas de senador por planeta), sem ofender
-                ninguém da nossa galáxia.
               </p>
             </div>
           </details>
