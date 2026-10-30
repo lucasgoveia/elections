@@ -21,4 +21,6 @@ pub enum Error {
     InvalidSignature,
     #[error("share decryption failed")]
     ShareDecryption,
+    #[error("key ceremony: {0}")]
+    Ceremony(String),
 }
