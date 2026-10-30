@@ -1,0 +1,24 @@
+{
+  "name": "schnorr",
+  "seed": "ded5ea3487a3b291b8c5918d4c0561f2d89eba02669bf1568aff3ed2140044b4",
+  "draws": "x, u (inside prove)",
+  "inputs": {
+    "x": "d25c1702f002de09faa32a648763551b094186a43910b3fbff748f493c54b903",
+    "ctx": [
+      "test",
+      "d7ead49957ef766bec59fa4c8e4c11cea35647ce653d7210305a7a539b114820"
+    ],
+    "context_hash": "d7ead49957ef766bec59fa4c8e4c11cea35647ce653d7210305a7a539b114820"
+  },
+  "outputs": {
+    "proof": [
+      "14ea4dd418555f1b6cd009764bcbe848f4950d335c344e8f141e2261f701d805",
+      "0f4002871dba19418283845ce407ba6385032a04dd8302a010e280ef6e6f1d0b"
+    ]
+  },
+  "intermediates": {
+    "A": "8ef249e684d6099f5e399b3d5889f4d6233a499f7342a07ce6fa74818efc764e",
+    "X": "82d84aa872768e1448ac91934448a82f173f7ebfa2fab175bc292dfa8d91875e",
+    "c": "14ea4dd418555f1b6cd009764bcbe848f4950d335c344e8f141e2261f701d805"
+  }
+}

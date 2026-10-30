@@ -1,0 +1,28 @@
+{
+  "name": "chaum-pedersen",
+  "seed": "c65811fca98813f6526908afbe8148bcf4ec63e66427a41e28690abdc4a3aa2d",
+  "draws": "x, u (inside prove)",
+  "inputs": {
+    "x": "70e2664ad70c8d394486789b4819f55880c4f71cdfdf6394f69bfe110c10e008",
+    "G1": "e2f2ae0a6abc4e71a884a961c500515f58e30b6aa582dd8db6a65945e08d2d76",
+    "G2": "38d00a4c0d1faf493655842bdeed663b477c221f51ddc71b4b4acb62e89df30b",
+    "ctx": [
+      "test",
+      "b6e993eef689c0b899db509ec5ccbdc4265f28effd363b450f1a3c505c0b0ec3"
+    ],
+    "context_hash": "b6e993eef689c0b899db509ec5ccbdc4265f28effd363b450f1a3c505c0b0ec3"
+  },
+  "outputs": {
+    "proof": [
+      "c4fbf9ddcca6c1104d4e95fea4985d3f5586b6eb91a31cfe8d263d5a818c2e0d",
+      "9dccbfa11e4c56fd3b710d4d85a8adaa9debac85d046e2b6265b7039962b060c"
+    ]
+  },
+  "intermediates": {
+    "c": "c4fbf9ddcca6c1104d4e95fea4985d3f5586b6eb91a31cfe8d263d5a818c2e0d",
+    "A1": "2c4c6162277efb536392439a7d8dc6d2c89801cbd7f40789f381b22fa67fbd31",
+    "A2": "ace901a156aa3de040b69c0df29f8caada30cee5843618c6a0fc95611f1cbb39",
+    "X1": "cea5650db8b153f71ba80a9a146d4ba7b99cacd58d9dd0d66aafad8b7514ad0c",
+    "X2": "a25ab268cc9f95c154986eb295cab3aa84098503704dd477b3a5326cd7e0231c"
+  }
+}

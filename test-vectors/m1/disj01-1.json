@@ -1,0 +1,38 @@
+{
+  "name": "disj01-1",
+  "seed": "e5139c837fc5b86afd9f6f7f78441746fb2ea666ce33d7c523866d8a4565c0ae",
+  "draws": "s, r, u, c_sim, v_sim",
+  "inputs": {
+    "K": "98aba675593a6d1a20508edbfa1885facf941b9405486a3d41cc3443827d665f",
+    "b": 1,
+    "r": "49c0996ff7e96b313cfdbb0a289079b1f768f0a05830190b2e0ae61cccf3f70d",
+    "s": "518a5857f4a28006c000a87692191ba1c342462eafdd898db0de39c130dbe704",
+    "ctx": [
+      "sel",
+      "d05a35bbe7565d1277d68d512ebfdae17ce8b3f957415b4922fa6b9e2e45f1f5",
+      "4242424242424242424242424242424242424242424242424242424242424242",
+      0,
+      3
+    ],
+    "context_hash": "d05a35bbe7565d1277d68d512ebfdae17ce8b3f957415b4922fa6b9e2e45f1f5"
+  },
+  "outputs": {
+    "proof": [
+      "67c3072986e14df195615aa800da43c4d75fe0239275a33743b199b4dd4cbb0e",
+      "dd344d3dad2c895b0475869ebe60dbdd9052cb4eb0b936e8daccf54d8d5b8d0b",
+      "84b30c18186ec58452ce29c177331d718c626e8fa43276d4850c32f3efb3c00c",
+      "8cc499c6edf08a372d7ee7dfcb54b8068b1365887eeef68855efc348985c1b00"
+    ],
+    "ciphertext": [
+      "ee7df9e72b6cf5e2cb64ee3bca8be9611ba7fd6b0b6fba233fe758ebf3cf5d2a",
+      "d08febea56887f1ef6055b088ef49120d35673091bccd5bd18a3f2f628d20068"
+    ]
+  },
+  "intermediates": {
+    "c": "57245f0919abc4f4c339e9a3e040408d68b2ab72422fda1f1e7e8f026ba8480a",
+    "A0": "e6000b37eda6242373ff2aa63dc7aa94f11ddbc17272f720789abf351b763b06",
+    "A1": "d04be153ec8eb16d914aef3d0bf3381cf65845d2fb948df0b5d57ca0e2db710a",
+    "D0": "0e5cda2eee2eb0f1ce202d285c09befa4768588c00fe0a095a99e99ea56bc315",
+    "D1": "a2291d09f832c73fff8498098f30322710b112e29a76f955ce5247f3150caa18"
+  }
+}

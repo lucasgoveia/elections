@@ -1,0 +1,19 @@
+{
+  "name": "hash",
+  "seed": "25fabe1f1bfb9470b64d09f535381f98163e278a52a5dce9174e3c623ff9e3b5",
+  "draws": "none",
+  "inputs": {
+    "tag": "eg/v1/test-vector/hash",
+    "items": [
+      1,
+      "abababababababababababababababababababababababababababababababab",
+      "x"
+    ]
+  },
+  "outputs": {
+    "digest": "fb15d9a4eea6ce3c97cb9d669b550f7cd1852ec7370fe0ae313af5cf3b2fbc65",
+    "transcript": "847665672f76312f746573742d766563746f722f68617368015820abababababababababababababababababababababababababababababababab6178",
+    "hash_to_scalar": "253f9f4b3f3c89804235c797668de661b0b96aff389d6ae4ac6ca6f205311607"
+  },
+  "intermediates": {}
+}

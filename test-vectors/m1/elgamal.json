@@ -1,0 +1,58 @@
+{
+  "name": "elgamal",
+  "seed": "098df30984387bf2e23d7d6165a8c220e70b19bd679e10d7389773f4f6255c80",
+  "draws": "s, r_0, r_1, r_2, r_3, r_4, r_prime",
+  "inputs": {
+    "r": [
+      "6def2fdca3009e0b98e869ace164693e894be433dee32c18f0ac3bb55f5b8109",
+      "d8c7c75221b80977e7cab091dbfcc9d0c479b42a6e36389bc413f186e499fd0e",
+      "af54b191fdf757d48934b1256de7428ca2d3bb4ae17a98c23f3c0f3094ead406",
+      "f48fffd0b53aeb2f2c74383bb7097195a01aa33b1f896c6f3eff60944a40b30a",
+      "c477b7d8514e1d5b6b84acc374223ebce280ecc341e476f7a476e37254adb606"
+    ],
+    "s": "4b4eeaf9d03bf888ed9869ee412b0ee58bdc29bf88b77d4ec1498dbf282d0302",
+    "r_prime": "50195c9faa405bea1af107c06ca0cf816b3a11abaabccf4bac8191595497610c",
+    "messages": [
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  "outputs": {
+    "K": "288db0e159859302d00b362069c1e9b06df83e779e7c2bbb2d49490d76a95660",
+    "sum": [
+      "d0d0b54463fbb39a4e26bd998368e0a7b558fd7d6757c6f2c4ee7a9038fdf415",
+      "f21a70ab6efc95be5d278e907eb8b5d8f8f728cd67fbd7f4b38e07707557013b"
+    ],
+    "ciphertexts": [
+      [
+        "66f6c0e38cbd4d860546833251f0f31d19e0e319c9655bbd25bdc98f8c93ef27",
+        "7c0b6741610695f604ed73d3ab1327732a9cc0102262f7df320e5f9fde15b976"
+      ],
+      [
+        "32f5ceb828f9e62869f5f571689eb6314df9adc4b253212e16f13431b0698828",
+        "b0d709710464fbf19516bdd6df72b4feec49d53fa08dd3f49925f9f8a8c24130"
+      ],
+      [
+        "fa1dbdf745769c95ea1e5c54cd470058ce3bfbb9bef5f44798d1aef6a9c70037",
+        "00eb6a648a9a5f3ee23cbad4e592865ad07cffc9907c5753d96e365b8c97d70a"
+      ],
+      [
+        "625989384d2d22669798e1c69c978ad40747c113084478f36ef87dd6988c553f",
+        "7cd1441138ce716a44feeaa9fbbe34be9c8e5bcc066f5a4f257dacbe2ff54109"
+      ],
+      [
+        "18e5658394f7651988e0963c62e939b63630242931835b127f717f3b7d992f5a",
+        "3e4395038ffa37c1b8c8d3ec82f061049aa559b38bd80c642daca5f6bcbec31a"
+      ]
+    ],
+    "sum_plaintext": 3,
+    "reencrypted_sum": [
+      "fa035e0dce8f88c8a5d16cc48e91157a8289e455de1cd64a645c9e8a1102501f",
+      "b48aefec896882e8b76ec78fa6b234128d49dc0f9cfda6f19ad40bca7819066d"
+    ]
+  },
+  "intermediates": {}
+}
