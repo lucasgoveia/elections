@@ -32,6 +32,17 @@ messages     08 signatures      who said what, and that it wasn't changed
   │
 key ceremony 10 DKG math        a key nobody knows, shared among n trustees
              11 ceremony        the public messages and the public ceremony verifier
+  │
+rulebook     12 manifest        the public description of the election: contests, trustees, blocs, mirrors
+             12 registry        which machine serves which section, and who may sign
+  │
+ballots      13 ballots         one whole ballot: nonces, encodings, link proofs, judging
+             14 tracking codes  the hash chain, cast-or-spoil, slips and spoil receipts
+  │
+board        15 board log       Merkle tree, signed tree heads, cutoffs
+mixnet       16 shuffle         re-encrypt and permute, with a proof anyone can check
+  │
+result       17 apportionment   from verified totals to seats, with integer-only rules
 ```
 
 ## Files
@@ -49,6 +60,12 @@ key ceremony 10 DKG math        a key nobody knows, shared among n trustees
 | 09 | [HPKE share encryption](09-hpke-share-encryption.md) | §5.5 |
 | 10 | [DKG math](10-dkg-math.md) | §8 |
 | 11 | [Ceremony records](11-ceremony-records.md) | §7.1, §8, §9 |
+| 12 | [Manifest, registry and the sample election](12-manifest-registry.md) | §7, §2.4 |
+| 13 | [Ballots](13-ballots.md) | §12, §14.2 |
+| 14 | [Tracking codes, slips and spoil receipts](14-tracking-codes.md) | §13, §14 |
+| 15 | [Bulletin board log](15-board-log.md) | §17 |
+| 16 | [The mixnet shuffle and its proof](16-shuffle.md) | §19.1 to §19.3, Appendix B |
+| 17 | [Seat apportionment](17-apportionment.md) | §22 |
 
 ## The toy group used throughout
 
