@@ -49,6 +49,9 @@ journal      19 journal         the machine's hash-chained record, zerésima, pr
 decryption   20 decryption      threshold opening, mixnet counting, final BU, results
 packages     21 packages        what the board accepts, observers, attestations, the freeze
 mixing       22 mixing          mix units, region merging, input lists, the mixer chain
+  │
+machine      23 voting machine  one polling session: encrypt, cast, spoil, restart, pre-BU, package
+pipeline     24 authority       board to result: section tallies, the pool, trustee refusal, seats
 ```
 
 ## Files
@@ -77,8 +80,12 @@ mixing       22 mixing          mix units, region merging, input lists, the mixe
 | 20 | [Threshold decryption, mixnet counting and results](20-decryption-results.md) | §16.5, §19.4 to §19.6, §20, §21 |
 | 21 | [Packages and board ingestion](21-packages-ingestion.md) | §16.1, §16.3, §16.4, §17.6, §17.7 |
 | 22 | [Mixnet orchestration](22-mixnet-orchestration.md) | §19.1, §19.2, §23 step 10 |
+| 23 | [The voting machine: one polling day](23-voting-machine.md) | §13.1, §14.1, §15, §16.1, §16.2, §16.4, §18.1 |
+| 24 | [The authority pipeline: from the board to the result](24-authority-pipeline.md) | §16.2, §16.5, §17.7, §18 to §22 |
 
 Files 18 to 22 follow apportionment in the layer order. Each one needs the layers above it: 18 needs ballots (13) and locked boxes (04); 19 needs chains (14) and the tally's imported records (18); 20 needs the tally (18), the shuffle (16) and the seat records (17); 21 needs the journal (19), the manifest (12) and the registry; 22 needs the tally (18) and the shuffle (16).
+
+Files 23 and 24 come last. 23 needs the journal (19), the registry and the packages it produces (21), and the tally's section sums (18). 24 needs the packages (21), the tally (18), the mix plan (22), and decryption and the final BU (20).
 
 ## The toy group used throughout
 

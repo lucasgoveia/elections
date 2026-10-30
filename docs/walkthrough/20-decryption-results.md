@@ -290,5 +290,5 @@ Without these checks, a corrupt EA could hand the trustees a "tally" that is rea
 
 - **Spec issue 16 (rejected share sets in the final BU check).** `check_final_bu` discards failing share sets and drops `combine`'s `rejected` list. The verifier must call `combine` to report them.
 - **§20.4 and the discrete log.** The spec allows baby-step giant-step. The code uses a linear walk, which is simpler to check, and the bound *N* keeps it small enough for one section.
-- **§20.5 is not in `decrypt.rs`.** The trustee's own pre-checks, described above, are not implemented in `eg-core` yet. Anything that calls `DecryptionShareSet::create` without them can open any box it is given.
+- **§20.5 is in `authority.rs`, not here.** `trustee_decrypt` (file 24) does the trustee's pre-checks for section tallies, the pool and the final mix list. It does not check that every imported recovered package is on the board, so a missing import is dropped silently there. Anything that calls `DecryptionShareSet::create` without those checks can open any box it is given.
 - **§28.11.** A failed discrete log must stop the process. `decode_sums` returns an error, and the caller must treat that as fatal, not as a missing count.

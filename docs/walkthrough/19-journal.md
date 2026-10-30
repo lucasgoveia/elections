@@ -2,7 +2,7 @@
 
 **Code:** `crates/eg-core/src/journal.rs`. **Spec:** §15 (journal format, records, privacy rules, invariants and recovery, zerésima), §16.2 (the pre-BU record, which the journal carries).
 
-**Scope of this file.** `journal.rs` defines the records, the frame chain, the signatures on checkpoints, authorizations and the zerésima, and the §15.4 checker `check_journal`. It checks what is on disk. The machine's own restart logic (appending a missing checkpoint, reprinting a slip, erasing ρ) is not in `eg-core` yet: `crates/eg-core/src/machine.rs` exists but is empty. That logic belongs to the machine, and this file only says what a correct journal looks like.
+**Scope of this file.** `journal.rs` defines the records, the frame chain, the signatures on checkpoints, authorizations and the zerésima, and the §15.4 checker `check_journal`. It checks what is on disk. The machine's own restart logic (appending a missing checkpoint, reprinting a slip, abandoning an unfinished ballot) is in `Session::restart`, in `crates/eg-core/src/machine.rs`. It is described in file 23 (`23-voting-machine.md`). This file only says what a correct journal looks like.
 
 ## The problem
 
@@ -168,7 +168,7 @@ Abandoned ballots do not consume an authorization (§15.4), so they are not part
 
 ### What a committed-but-unresolved ballot does
 
-A `committed` record with no status is the state after a crash. On a live machine, the machine appends `abandoned` for it (§15.4). The checker here is stricter: `Checker::step` rejects any record that arrives while a committed ballot is pending, unless the record is its status. A recovered journal cut at a checkpoint never ends in that state, because the checkpoint comes after the status. So the rule is that a committed ballot without a status is always an error in the journal, in both modes. The spec's "becomes abandoned" wording applies to the live machine, which has not been written yet (spec issue 15).
+A `committed` record with no status is the state after a crash. On a live machine, the machine appends `abandoned` for it (§15.4). The checker here is stricter: `Checker::step` rejects any record that arrives while a committed ballot is pending, unless the record is its status. A recovered journal cut at a checkpoint never ends in that state, because the checkpoint comes after the status. So the rule is that a committed ballot without a status is always an error in the journal, in both modes. The spec's "becomes abandoned" wording applies to the live machine. `Session::restart` in `crates/eg-core/src/machine.rs` appends `abandoned` for such a ballot (file 23, spec issue 15).
 
 ## Recovered journals (`complete = false`, §16.4)
 
@@ -254,8 +254,8 @@ The same checker runs in both modes, and only the ending differs.
 
 ## Spec gaps and issues relevant here
 
-- **Spec issue 15 (unfinished ballot in a recovered journal).** Checkpoints follow status records only, so a recovered journal never ends inside a ballot. The checker rejects a committed ballot without a status in both modes. The spec's "becomes abandoned" rule applies only to a live machine, which appends `abandoned` itself. That machine is not in `eg-core` yet.
+- **Spec issue 15 (unfinished ballot in a recovered journal).** Checkpoints follow status records only, so a recovered journal never ends inside a ballot. The checker rejects a committed ballot without a status in both modes. The spec's "becomes abandoned" rule applies only to a live machine, which appends `abandoned` itself. That machine is `Session::restart` in `crates/eg-core/src/machine.rs` (file 23).
 - **§16.4 "every committed ballot without a final status … is treated as abandoned".** For the same reason this clause cannot arise in a checked recovered journal. It is kept in the spec for the live machine's recovery.
-- **Machine restart is not here.** §15.4's restart rules (append the missing checkpoint, reprint the slip byte-identical, erase ρ on abandon) depend on the machine's own state and are not implemented. `machine.rs` is empty.
+- **Machine restart is in `machine.rs`.** §15.4's restart rules (append the missing checkpoint, reprint the slip byte-identical, abandon an unfinished ballot) are implemented in `Session::restart` (`crates/eg-core/src/machine.rs`, line 646). ρ is not recovered, because it was only in memory. See file 23 for the walkthrough. Its tests are `restart_after_cast_before_checkpoint_reprints_the_same_slip`, `restart_after_committed_abandons_the_ballot`, `restart_drops_a_torn_final_frame` and `restart_refuses_a_corrupted_middle_frame`.
 - **Fields 13 to 15 of the pre-BU are checked elsewhere.** The voter-roll count is checked on the poll terminal, the fingerprint and the pooled list by the tally (file 18). A reader of this file alone cannot check them.
 - **Spec issue 9 (verifier independence).** The package checks in file 21 use this file's `check_journal`, so a bug here would be shared by the machine's self-check and the verifier. The test vectors (file 07) and the tests above are the guard.
