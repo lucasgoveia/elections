@@ -71,10 +71,14 @@ pub(crate) fn step6_packages<'a>(
 
     // Observer certificates and revocations must verify under a party key (§16.3).
     for (i, e) in entries.iter().enumerate() {
+        // A party record must verify under the key of the party it names in
+        // field 3 (§16.3), not merely under some party's key.
+        let named_party = e.get(3).ok().flatten().and_then(|v| v.as_uint().ok());
         let verifies = |check: &dyn Fn(&eg_core::sign::VerifyingKey) -> bool| {
             manifest
                 .parties
                 .iter()
+                .filter(|p| Some(p.index) == named_party)
                 .filter_map(|p| p.key.as_ref())
                 .any(check)
         };

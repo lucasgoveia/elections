@@ -122,3 +122,15 @@ so the spec can be updated to match (or the code changed).
 26. **§15.4 crash after spoil.** Restart reprints a cast slip, but a crash
     between `spoiled` and printing leaves the voter with no spoil receipt. The
     spec is silent; reprinting the receipt the same way would close it.
+
+27. **§14.2 vote flipping is caught only by the voter's own check.** When a
+    machine encrypts something other than the voter's choice and then signs a
+    spoil receipt claiming the real choice, the board's reveal is consistent
+    with the flipped ballot, so the public verifier (step 8) passes. Only the
+    independent check of the voter's receipt shows the mismatch. That is the
+    Benaloh design, but it means receipts must actually be checked.
+
+28. **§23 verifier gaps not yet closed.** Reserve machines' poll-worker keys
+    aren't re-checked in step 7 (the journal checker enforces them); step 16's
+    "published nothing" covers observer certificates only, not mirror heads or
+    trustee messages; steps 7, 10, 12, 13 and 14 have no tamper tests.

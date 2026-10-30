@@ -175,7 +175,12 @@ impl Ledger {
                         let Some(pk) = party.key.as_ref() else {
                             continue;
                         };
-                        if let Ok(cert) = eg_core::package::ObserverCert::from_signed(e, pk) {
+                        // The certificate counts only for the party whose key
+                        // signed it (§16.3), so a cert can't credit another party.
+                        if let Some(cert) = eg_core::package::ObserverCert::from_signed(e, pk)
+                            .ok()
+                            .filter(|c| c.party_index == party.index)
+                        {
                             observers.push(cert.observer_key);
                             cert_parties.push(cert.party_index);
                             break;
