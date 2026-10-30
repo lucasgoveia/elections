@@ -64,7 +64,7 @@ const short = (hex: string, n = 16) => hex.slice(0, n).toUpperCase().match(/.{4}
 
 // -- rendering ------------------------------------------------------------------
 
-type Linha = [string, ('ok' | 'mau' | 'nota')?];
+type Linha = [string, ('ok' | 'mau' | 'obs')?];
 
 function show(box: HTMLElement, lines: Linha[]) {
   const ol = box.querySelector<HTMLOListElement>('.passos')!;
@@ -174,9 +174,9 @@ bench('run-hash', async (box) => {
   return [
     [`D("eg/v1/code", "${escapeText(t)}") = ${short(code, 32)}…`],
     [`D("eg/v1/ballot", "${escapeText(t)}") = ${short(ballot, 32)}…`],
-    ['mesma entrada, etiquetas diferentes: as impressões não têm relação nenhuma', 'nota'],
+    ['mesma entrada, etiquetas diferentes: as impressões não têm relação nenhuma', 'obs'],
     [`D("eg/v1/code", "${escapeText(t)}.") = ${short(changed, 32)}…`],
-    ['um ponto a mais no fim muda a impressão inteira', 'nota'],
+    ['um ponto a mais no fim muda a impressão inteira', 'obs'],
   ];
 });
 
@@ -271,12 +271,12 @@ bench('run-schnorr', async (box) => {
     [`quem confere: g<sup>${v}</sup> = ${el(lhs)} e A·X<sup>${c}</sup> = ${el(rhs)}`, lhs === rhs ? 'ok' : 'mau'],
   ];
   if (c2 === c) {
-    lines.push([`escolha um segundo desafio diferente de ${c} para ver a extração`, 'nota']);
+    lines.push([`escolha um segundo desafio diferente de ${c} para ver a extração`, 'obs']);
   } else {
     const v2 = mod(u + c2 * x, Q);
     const xr = mod((v - v2) * invQ(mod(c - c2, Q)), Q);
     lines.push([`se a mesma entrada A respondesse também ao desafio ${c2}: v' = ${v2}`]);
-    lines.push([`então x = (${v} − ${v2}) ÷ (${c} − ${c2}) mod 11 = ${xr}: duas respostas entregam o segredo`, 'nota']);
+    lines.push([`então x = (${v} − ${v2}) ÷ (${c} − ${c2}) mod 11 = ${xr}: duas respostas entregam o segredo`, 'obs']);
   }
   const cs = mod(c + 3, Q);
   const vs = mod(v + 5, Q);
@@ -313,7 +313,7 @@ bench('run-cp', async (box) => {
     [`base α: α<sup>${v}</sup> = ${el(pw(alpha, v))} e α<sup>${u}</sup>·M<sup>${c}</sup> = ${el(mul(a2, pw(M, c)))}`, ok2 ? 'ok' : 'mau'],
   ];
   if (lies && ok2) {
-    lines.push(['o desafio deu 0, e com desafio 0 qualquer parte passa; no grupo real a chance disso é desprezível', 'nota']);
+    lines.push(['o desafio deu 0, e com desafio 0 qualquer parte passa; no grupo real a chance disso é desprezível', 'obs']);
   } else {
     lines.push([ok1 && ok2 ? 'parte aceita: M usa o mesmo pedaço registrado' : 'parte rejeitada: M não usa o pedaço registrado', ok1 && ok2 ? 'ok' : 'mau']);
   }
@@ -355,10 +355,10 @@ bench('run-disj', async (box) => {
       check.ok
         ? `a trapaça passou na tentativa ${tentativas}: no brinquedo há só 11 desafios. No grupo real seriam ≈ 7 × 10<sup>75</sup>`
         : `rejeitada. Aperte "Nova tentativa": no brinquedo, uma em cada 11 passa por sorte`,
-      'nota',
+      'obs',
     ]);
   } else {
-    lines.push(['quem confere não tem como saber qual afirmação era a fingida', 'nota']);
+    lines.push(['quem confere não tem como saber qual afirmação era a fingida', 'obs']);
   }
   return lines;
 });
@@ -398,7 +398,7 @@ bench('run-cedula', async (box) => {
       : c === 0 && op === 'AB'
         ? 'o desafio deu 0 e a prova passou por acaso; no grupo real isso não acontece'
         : 'a soma não é 1: a cédula é rejeitada, mesmo com cada caixa individualmente válida',
-    'nota',
+    'obs',
   ]);
   return lines;
 });
@@ -425,7 +425,7 @@ bench('run-codigo', async (box) => {
     any
       ? 'mexer numa cédula mudou o código dela e de todas as seguintes; os eleitores com os comprovantes antigos percebem'
       : 'mude o texto da cédula 2 e veja os códigos 2 e 3 mudarem',
-    'nota',
+    'obs',
   ]);
   return lines;
 });
@@ -457,7 +457,7 @@ bench('run-benaloh', async (box) => {
       same
         ? 'a urna trancou o que o eleitor escolheu'
         : `a troca foi pega. Testando os 11 valores possíveis de r, ${others === 0 ? 'nenhum' : others} faz a caixa bater com o voto ${voto}: α fixa r, e β fixa o voto`,
-      'nota',
+      'obs',
     ],
   ];
 });
@@ -488,7 +488,7 @@ bench('run-mural', async (box) => {
       recomputed === raizAssinada
         ? 'a sua entrada está no mural assinado'
         : 'com a entrada alterada, a raiz não bate: o mural assinado não contém este texto',
-      'nota',
+      'obs',
     ],
   ];
 });
@@ -517,7 +517,7 @@ bench('run-mixnet', () => {
   return [
     [`entrada: ${fmt(input)}`],
     [`saída: ${fmt(output)}`],
-    [`segredo do embaralhador (não publicado): saída i veio da entrada ${perm.map((p) => p + 1).join(', ')}, com r' = ${fresh.join(', ')}`, 'nota'],
+    [`segredo do embaralhador (não publicado): saída i veio da entrada ${perm.map((p) => p + 1).join(', ')}, com r' = ${fresh.join(', ')}`, 'obs'],
     ['nenhuma caixa da saída é igual a uma da entrada', disjoint ? 'ok' : 'mau'],
     [`abrindo a saída: votos ${output.map(open).join(', ')}; mesma coleção da entrada (${VOTOS.join(', ')}), em outra ordem`, sameVotes ? 'ok' : 'mau'],
   ];

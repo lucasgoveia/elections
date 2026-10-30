@@ -680,7 +680,7 @@ figure figcaption b {
   margin-top: 4px;
 }
 
-.passos li.nota {
+.passos li.obs {
   font-family: var(--f-texto);
   font-style: italic;
   font-size: 16px;
