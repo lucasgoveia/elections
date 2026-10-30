@@ -35,6 +35,12 @@ export interface ContestDto {
   options: OptionDto[];
   seats: number | null;
   linkGroup: number | null;
+  /** "Presidente", "Senador", ... Older builds leave it out: the code falls back to `name`. */
+  office: string;
+  /** "1ª vaga", "2ª vaga", or null for a single-seat office. */
+  seat: string | null;
+  /** The planet (or place) a contest belongs to, or null. */
+  place: string | null;
 }
 
 export interface OptionDto {
@@ -42,7 +48,10 @@ export interface OptionDto {
   name: string;
   kind: OptionKindName;
   number: string | null;
+  /** The party's name, e.g. "Aliança Rebelde". */
   party: string | null;
+  /** The party's number, e.g. "10". Null for blank and null options. */
+  partyNumber: string | null;
 }
 
 export interface PartyDto {
@@ -140,9 +149,27 @@ export interface ResultContestDto {
   seats: SeatDto[] | null;
 }
 
+/** One contest's votes in one section. `votes[i]` is the count for the contest's `options[i]`. */
+export interface SectionContestDto {
+  index: number;
+  counted: number;
+  votes: number[];
+}
+
+/** One section's Boletim de Urna: its counts, its pre-BU fingerprint and the match verdict. */
+export interface SectionResultDto {
+  sectionId: string;
+  matches: boolean;
+  eligible: number;
+  cast: number;
+  abstentions: number;
+  preBuFingerprint: string;
+  contests: SectionContestDto[];
+}
+
 export interface ResultDto {
   contests: ResultContestDto[];
-  sections: { id: string; matches: boolean }[];
+  sections: SectionResultDto[];
 }
 
 export interface SthDto {
@@ -237,5 +264,6 @@ export type StripData =
   | { kind: 'slip'; slip: SlipDto }
   | { kind: 'spoil'; spoil: SpoilDto }
   | { kind: 'prebu'; prebu: PreBuDto }
+  | { kind: 'bu'; section: SectionResultDto }
   | { kind: 'result'; result: ResultDto; note?: string }
   | { kind: 'sth'; sth: SthDto };

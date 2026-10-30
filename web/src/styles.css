@@ -13,6 +13,7 @@
   --corrige: #e86a17;
   --branco: #f4f4f0;
   --stamp: #b3261e;
+  --auditar: #2f5d9e;
 
   /* Derived from the tokens above. */
   --panel: color-mix(in srgb, var(--wall) 70%, var(--paper));
@@ -506,6 +507,64 @@ body {
   margin-bottom: 12px;
 }
 
+/* -- tabs ------------------------------------------------------------------ */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  border-bottom: 2px solid var(--ink);
+  margin: 0 0 12px;
+}
+
+.tab {
+  font: 600 14px/1.2 var(--font-body);
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: 8px 10px 6px;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab-on {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.tab-panel[hidden] {
+  display: none !important;
+}
+
+/* -- photos ---------------------------------------------------------------- */
+
+.photo {
+  display: inline-block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  background: var(--paper);
+  vertical-align: top;
+}
+
+.photo img,
+.photo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
 /* -- urna ------------------------------------------------------------------ */
 
 .urna-wrap {
@@ -532,53 +591,169 @@ body {
   }
 }
 
+/* The screen: a TSE-style LCD. Top-left text, the photo top-right, a rule, then the footer key hint. */
 .lcd {
   background: var(--lcd);
   color: var(--ink);
   border: 2px solid var(--ink);
   border-radius: 2px;
   padding: 12px;
-  min-height: 260px;
+  min-height: 280px;
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
 }
 
-.lcd-head {
+.lcd-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lcd-top {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
 }
 
-.lcd-progress {
-  font-size: 12px;
-  font-weight: 300;
+.lcd-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.lcd-tag {
-  display: inline-block;
+.lcd-kicker {
   font-size: 12px;
-  border: 1px solid var(--ink);
-  padding: 0 4px;
-  margin-top: 6px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.lcd-office {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.lcd-seat {
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .lcd-line {
   font-size: 12px;
+  margin-top: 4px;
+}
+
+.lcd-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  border: 1px solid var(--ink);
+  padding: 0 4px;
+  margin-top: 2px;
+}
+
+.lcd-big {
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-top: 8px;
+}
+
+.lcd-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-top: 6px;
+  font-size: 13px;
+}
+
+.lcd-name {
+  font-weight: 500;
+}
+
+.lcd-warn {
+  color: var(--stamp);
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.lcd-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lcd-photo {
+  flex: 0 0 auto;
+}
+
+.lcd-photo-empty {
+  width: 92px;
+  height: 92px;
+  border: 1.5px dashed var(--ink);
+  border-radius: 2px;
+}
+
+.lcd-rule {
+  border-top: 1.5px solid var(--ink);
+  margin-top: auto;
+}
+
+.lcd-foot {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.lcd-center {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.lcd-fim {
+  font-size: 56px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.lcd-line-big {
+  font-size: 18px;
+  margin: 0;
 }
 
 .lcd-gate {
-  margin: 8px 0;
+  margin: 0;
   font-size: 14px;
+  line-height: 1.4;
+}
+
+.lcd-final {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.lcd-code {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+  margin: 4px 0;
 }
 
 .boxes {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .box {
@@ -590,43 +765,6 @@ body {
   border: 1.5px solid var(--ink);
   background: var(--paper);
   font-size: 20px;
-}
-
-.lcd-info {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.lcd-name {
-  font-weight: 500;
-}
-
-.lcd-warn {
-  color: var(--stamp);
-  font-weight: 500;
-}
-
-.lcd-hint {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.lcd-final {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-.lcd-code {
-  font-size: 28px;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
 }
 
 .keypad {
@@ -685,10 +823,13 @@ body {
   font-size: 12px;
 }
 
-.urna-keys {
-  font-size: 12px;
-  color: var(--muted);
-  margin: 8px 0 0;
+/* AUDITAR: its own key, only live on the code screen. */
+.key-auditar {
+  background: var(--auditar);
+  border-color: var(--auditar);
+  color: #ffffff;
+  font-size: 13px;
+  min-height: 40px;
 }
 
 .note {
@@ -718,9 +859,136 @@ body {
   color: var(--stamp);
 }
 
+/* -- candidate guide ------------------------------------------------------- */
+
+.guide .lead {
+  margin-top: 0;
+}
+
+.cand-block {
+  margin-bottom: 20px;
+}
+
+.cand-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+}
+
+.cand-title {
+  font-size: 20px;
+  margin: 0;
+}
+
+.cands {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.cand {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cand .photo {
+  width: 100%;
+  height: auto;
+}
+
+.cand-num {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 4px;
+}
+
+.cand-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cand-party {
+  overflow-wrap: anywhere;
+}
+
+.party-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+.party-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  padding: 6px 8px;
+}
+
+.party-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--ink);
+  flex: 0 0 auto;
+}
+
+.party-number {
+  font-weight: 500;
+  min-width: 3ch;
+}
+
+.credit {
+  margin-top: 16px;
+}
+
 /* -- results --------------------------------------------------------------- */
 
-.result {
+.kicker {
+  font: 500 12px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px 12px;
+  margin: 12px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--rule);
+  font-size: 12px;
+}
+
+.stats dt {
+  color: var(--muted);
+}
+
+.stats dd {
+  margin: 0;
+  font-size: 14px;
+}
+
+.pres,
+.sen {
   background: var(--panel);
   border: 1px solid var(--rule);
   border-radius: 2px;
@@ -728,63 +996,75 @@ body {
   min-width: 0;
 }
 
-.result-featured {
-  margin-bottom: 12px;
+.pres {
+  margin-bottom: 16px;
 }
 
-.result-title {
+.pres-head,
+.sen-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.sen-place {
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 20px;
   margin: 0;
+  flex: 1;
 }
 
-.result-featured .result-title {
-  font-size: 28px;
-}
-
-.result-lead {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin: 6px 0 0;
-}
-
-.big {
-  font-size: 44px;
-  line-height: 1;
-}
-
-.result-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 12px;
-}
-
-.bars {
+.rank {
   list-style: none;
-  margin: 10px 0 8px;
+  margin: 10px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.bar-row {
-  display: grid;
-  grid-template-columns: minmax(60px, 40%) minmax(0, 1fr) 3ch;
-  align-items: center;
   gap: 8px;
-  font-size: 12px;
 }
 
-.bar-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.rank-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 0;
+  min-width: 0;
+}
+
+.rank-won .photo {
+  box-shadow: 0 0 0 3px var(--confirma);
+}
+
+.rank-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rank-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rank-votes {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rank-pct {
+  font-size: 28px;
+  line-height: 1;
 }
 
 .bar-track {
   display: block;
-  height: 12px;
+  height: 8px;
   background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
@@ -794,15 +1074,51 @@ body {
   background: var(--ink);
 }
 
-.bar-votes {
-  text-align: right;
+.sen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.seats {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
+.sen-elected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.sen-fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
   font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.sen-all {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.sen-all summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.chip-round {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.chip-tie {
+  font-size: 12px;
+  color: var(--stamp);
+  font-weight: 500;
+  margin: 8px 0 0;
 }
 
 .section-chips {
@@ -829,6 +1145,36 @@ body {
   background: var(--stamp);
   border-color: var(--stamp);
   color: var(--paper);
+}
+
+/* -- boletins, large ------------------------------------------------------- */
+
+.bu-large {
+  width: 100%;
+  max-width: 560px;
+  font-size: 13px;
+  margin: 8px 0 12px;
+  box-shadow: 0 2px 6px var(--rule);
+}
+
+.bu-large .strip-qr {
+  width: 140px;
+}
+
+.bu-large .strip-qr svg {
+  width: 140px;
+  height: 140px;
+}
+
+.tech-label {
+  display: inline-block;
+  font: 500 10px var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid currentColor;
+  padding: 0 4px;
+  margin-right: 4px;
+  opacity: 0.8;
 }
 
 /* -- audit sheet ----------------------------------------------------------- */

@@ -1,15 +1,14 @@
 import { useSim } from './sim';
-import type { Phase } from './types';
 import { Stage } from './components/Stage';
 import { Workbench } from './components/Workbench';
 import { Printer } from './components/Printer';
 import { Board } from './components/Board';
 import { shortHash } from './format';
 
-const PHASES = ['Ceremony', 'Polls', 'Voting', 'Close', 'Tally', 'Verify'];
+const PHASES = ['Cerimônia de chaves', 'Abertura', 'Votação', 'Encerramento', 'Apuração', 'Verificação'];
 
-/** Index into PHASES of the step the election is on. Close is done once polls are closed. */
-const CURRENT: Record<Phase, number> = {
+/** Index into PHASES of the step the election is on. Encerramento is done once polls are closed. */
+const CURRENT: Record<string, number> = {
   setup: 0,
   'ceremony-done': 1,
   'polls-open': 2,
@@ -25,7 +24,7 @@ function Rail() {
       <div className="brand">
         <span className="mono">eg/v1</span> Urna Lab
       </div>
-      <ol className="rail-phases" aria-label="Election phase">
+      <ol className="rail-phases" aria-label="Etapa da eleição">
         {PHASES.map((label, i) => (
           <li
             key={label}
@@ -43,8 +42,8 @@ function Rail() {
             {busy}
           </span>
         )}
-        <span className="rail-root mono" title={`Board root ${snap.root}`}>
-          root {shortHash(snap.root)}
+        <span className="rail-root mono" title={`Raiz do mural ${snap.root}`}>
+          raiz {shortHash(snap.root)}
         </span>
       </div>
     </header>
@@ -58,7 +57,7 @@ function Toast() {
     <div className="toast" role="alert" key={toast.id}>
       <span>{toast.text}</span>
       <button type="button" className="btn btn-small" onClick={dismissToast}>
-        Dismiss
+        Dispensar
       </button>
     </div>
   );

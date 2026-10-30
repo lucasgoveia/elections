@@ -22,6 +22,7 @@ import type {
   SthDto,
   StripData,
 } from './types';
+import { toElection } from './normalize';
 
 // -- scenarios ----------------------------------------------------------------
 
@@ -30,10 +31,16 @@ export interface ScenarioInfo {
   name: string;
 }
 
+/** Names shown for the scenarios, in pt-BR. Unknown ids keep the name the wasm gives. */
+const SCENARIO_NAMES: Record<string, string> = {
+  'star-wars': 'Star Wars',
+  pilot: 'Piloto (exemplo brasileiro)',
+};
+
 /** Scenarios the app offers. The wasm may list its own with `scenarios()`. */
 export const FALLBACK_SCENARIOS: ScenarioInfo[] = [
-  { id: 'star-wars', name: 'Star Wars' },
-  { id: 'pilot', name: 'Pilot (Brazilian sample)' },
+  { id: 'star-wars', name: SCENARIO_NAMES['star-wars'] },
+  { id: 'pilot', name: SCENARIO_NAMES.pilot },
 ];
 
 /** The scenarios the wasm build offers, or the fallback list if it has no `scenarios()`. */
@@ -42,7 +49,9 @@ export function availableScenarios(): ScenarioInfo[] {
   if (typeof fn === 'function') {
     try {
       const list = fn();
-      if (Array.isArray(list) && list.length > 0) return list;
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map((s) => ({ ...s, name: SCENARIO_NAMES[s.id] ?? s.name }));
+      }
     } catch {
       // Fall through to the fallback list.
     }
@@ -137,32 +146,32 @@ function readSnapshot(sim: Sim): Snapshot {
     root: sim.board_root(),
     board: sim.board() as BoardEntryDto[],
     attacks: sim.get_attacks() as AttacksDto,
-    election: sim.election() as ElectionDto,
+    election: toElection(sim.election() as ElectionDto),
   };
 }
 
-/** Turns a wasm error into a sentence that says what to do next. */
+/** Turns a wasm error into a sentence that says what to do next, in pt-BR. */
 export function explain(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (/needs phase/.test(msg)) {
-    return "That step isn't open yet. Finish the step before it in the rail, then try again.";
+    return 'Esta etapa ainda não está aberta. Conclua a etapa anterior no trilho e tente de novo.';
   }
   if (/already has an open session/.test(msg)) {
-    return 'That machine already has an open session. Close it before opening another.';
+    return 'Esta urna já tem uma seção aberta. Encerre a seção antes de abrir outra.';
   }
   if (/no ballot is pending/.test(msg)) {
-    return 'There is no ballot in progress on that machine. Authorize a voter and encrypt a ballot first.';
+    return 'Não há cédula em andamento nesta urna. Identifique um eleitor e libere a urna antes.';
   }
   if (/a ballot is pending/.test(msg)) {
-    return 'Finish the ballot on the urna first: cast, spoil or abandon it.';
+    return 'Termine a cédula na urna primeiro: depositar, auditar ou abandonar.';
   }
   if (/not a short code/.test(msg)) {
-    return "That isn't a short code. It looks like XXXX-XXXX-XXXX-XXXX-XXXX (letters and digits, five groups of four).";
+    return 'Isto não é um código curto. Ele tem o formato XXXX-XXXX-XXXX-XXXX-XXXX (letras e dígitos, cinco grupos de quatro).';
   }
   if (/no open session/.test(msg)) {
-    return 'That machine has no open session. Open a session on it first.';
+    return 'Esta urna não tem seção aberta. Abra a seção nela primeiro.';
   }
-  return `The simulator refused the step: ${msg}`;
+  return `O simulador recusou a etapa: ${msg}`;
 }
 
 // -- context ------------------------------------------------------------------
@@ -192,6 +201,16 @@ export function useSim(): SimContext {
   return c;
 }
 
+/** Keeps at most this many strips in the printer. */
+const MAX_STRIPS = 80;
+
+/** Prints a batch of strips, in order. The newest is on top, as on the printer. */
+export function printStrips(u: Ui, list: StripData[]): Ui {
+  let id = u.nextStripId;
+  const items: StripItem[] = list.map((data) => ({ id: id++, data }));
+  return { ...u, strips: [...items.reverse(), ...u.strips].slice(0, MAX_STRIPS), nextStripId: id };
+}
+
 export function SimProvider({ children }: { children: ReactNode }) {
   const [boot] = useState(() => {
     const sim = createSim(randomSeed(), FALLBACK_SCENARIOS[0].id);
@@ -212,7 +231,7 @@ export function SimProvider({ children }: { children: ReactNode }) {
       if (busyRef.current) return undefined;
       busyRef.current = true;
       setBusy(label);
-      // Yield so the "Working…" state paints before the wasm call blocks.
+      // Yield so the "Trabalhando…" state paints before the wasm call blocks.
       await new Promise((r) => setTimeout(r, 16));
       try {
         return fn(simRef.current);
@@ -240,15 +259,7 @@ export function SimProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const addStrip = useCallback(
-    (data: StripData) =>
-      setUi((u) => ({
-        ...u,
-        strips: [{ id: u.nextStripId, data }, ...u.strips].slice(0, 40),
-        nextStripId: u.nextStripId + 1,
-      })),
-    [],
-  );
+  const addStrip = useCallback((data: StripData) => setUi((u) => printStrips(u, [data])), []);
 
   const newElection = useCallback((scenario: string) => {
     const old = simRef.current;

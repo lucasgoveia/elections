@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSim } from '../sim';
 
-/** The bulletin board: a slate drawer listing every entry, with its JSON or CBOR hex. */
+/** The public bulletin board (Mural público): a slate drawer listing every entry, with its JSON or CBOR hex. */
 export function Board() {
   const { snap, getSim } = useSim();
   const [open, setOpen] = useState(false);
@@ -20,7 +20,7 @@ export function Board() {
   }, [sel, hex, snap.root, getSim]);
 
   return (
-    <section className={`board ${open ? 'board-open' : ''}`} aria-label="Bulletin board">
+    <section className={`board ${open ? 'board-open' : ''}`} aria-label="Mural público">
       <button
         type="button"
         className="board-toggle"
@@ -28,11 +28,12 @@ export function Board() {
         aria-controls="board-body"
         onClick={() => setOpen((o) => !o)}
       >
-        <span className="display">Bulletin board</span>
+        <span className="display">Mural público</span>
         <span className="mono">
-          {snap.board.length} {snap.board.length === 1 ? 'entry' : 'entries'} · root {snap.root.slice(0, 8)}…{snap.root.slice(-4)}
+          {snap.board.length} {snap.board.length === 1 ? 'entrada' : 'entradas'} · raiz {snap.root.slice(0, 8)}…
+          {snap.root.slice(-4)}
         </span>
-        <span aria-hidden="true">{open ? 'Hide' : 'Show'}</span>
+        <span aria-hidden="true">{open ? 'Ocultar' : 'Mostrar'}</span>
       </button>
 
       <div id="board-body" className="board-body" hidden={!open}>
@@ -55,13 +56,13 @@ export function Board() {
         </div>
         <div className="board-detail-pane">
           {sel === null ? (
-            <p className="muted small">Click an entry to see its record.</p>
+            <p className="muted small">Clique em uma entrada para ver o registro.</p>
           ) : (
             <>
               <div className="board-detail-head">
-                <span className="mono">Entry #{sel}</span>
+                <span className="mono">Entrada #{sel}</span>
                 <button type="button" className="btn btn-small" onClick={() => setHex((h) => !h)}>
-                  {hex ? 'Show JSON' : 'Show CBOR hex'}
+                  {hex ? 'Mostrar JSON' : 'Mostrar CBOR hex'}
                 </button>
               </div>
               <pre className="board-pre mono">{shown}</pre>

@@ -4,6 +4,7 @@ import {
   attackOpen,
   availableScenarios,
   blankSession,
+  printStrips,
   useSim,
   type MachineUi,
 } from '../sim';
@@ -13,11 +14,11 @@ import type {
   ElectionDto,
   PreBuDto,
   ReportDto,
-  ResultDto,
   SthDto,
-  StripData,
   ZeresimaDto,
 } from '../types';
+import { toResult } from '../normalize';
+import { tallyStrips } from './strips';
 
 /** The left column: who acts in the current phase, and the buttons they press. */
 export function Stage() {
@@ -26,7 +27,7 @@ export function Stage() {
   return (
     <section className="stage" aria-labelledby="stage-title">
       <h2 id="stage-title" className="col-title">
-        Stage
+        Palco
       </h2>
 
       {phase === 'setup' && <CeremonyPanel />}
@@ -52,7 +53,7 @@ function Panel({ step, title, who, children }: { step: string; title: string; wh
       <div className="panel-step">{step}</div>
       <h3 className="panel-title">{title}</h3>
       <p className="muted small">
-        <strong>Who acts:</strong> {who}
+        <strong>Quem age:</strong> {who}
       </p>
       <div className="panel-body">{children}</div>
     </div>
@@ -61,30 +62,34 @@ function Panel({ step, title, who, children }: { step: string; title: string; wh
 
 // -- ceremony -------------------------------------------------------------------
 
+const CEREMONY = 'Realizando a cerimônia…';
+
 function CeremonyPanel() {
   const { snap, busy, run, update } = useSim();
   const election = snap.election;
   return (
     <Panel
-      step="Ceremony"
-      title="Key ceremony"
-      who={`the trustees (${election.trustees.length}), each in its own bloc. They make the joint key with no single holder.`}
+      step="1 · Cerimônia de chaves"
+      title="Cerimônia de chaves"
+      who={`os guardiões da chave (${election.trustees.length}), cada um em seu bloco. Eles geram a chave da eleição sem que nenhum deles a detenha.`}
     >
       <button
         type="button"
         className="btn btn-primary"
         disabled={busy !== null}
         onClick={async () => {
-          const r = await run('Running key ceremony…', (sim) => sim.run_ceremony());
+          const r = await run(CEREMONY, (sim) => sim.run_ceremony());
           if (r) update((u) => ({ ...u, ceremony: r as CeremonyDto }));
         }}
       >
-        {busy === 'Running key ceremony…' ? 'Working…' : 'Run key ceremony'}
+        {busy === CEREMONY ? 'Trabalhando…' : 'Realizar cerimônia de chaves'}
       </button>
       <RunWholeElection />
     </Panel>
   );
 }
+
+const WHOLE = 'Rodando a eleição inteira…';
 
 function RunWholeElection() {
   const { busy, run, update } = useSim();
@@ -95,34 +100,27 @@ function RunWholeElection() {
         className="btn"
         disabled={busy !== null}
         onClick={async () => {
-          const r = await run('Running the whole election…', (sim) => sim.run_all());
+          const r = await run(WHOLE, (sim) => sim.run_all());
           if (!r) return;
-          const view = r as ResultDto;
-          const stripData: StripData = {
-            kind: 'result',
-            result: view,
-            note: 'Printed by Run whole election. Its intermediate strips are not shown.',
-          };
+          const view = toResult(r);
           update((u) => {
             const sessions: Record<string, MachineUi> = {};
             for (const [id, m] of Object.entries(u.sessions)) {
               sessions[id] = m.open ? { ...m, open: false, closed: true, authorized: false, pending: false } : m;
             }
-            return {
-              ...u,
-              result: view,
-              sessions,
-              strips: [{ id: u.nextStripId, data: stripData }, ...u.strips].slice(0, 40),
-              nextStripId: u.nextStripId + 1,
-            };
+            const printed = printStrips(
+              { ...u, sessions, result: view },
+              tallyStrips(view, 'Impresso por Rodar eleição completa. As etapas intermediárias não aparecem aqui.'),
+            );
+            return printed;
           });
         }}
       >
-        {busy === 'Running the whole election…' ? 'Working…' : 'Run whole election'}
+        {busy === WHOLE ? 'Trabalhando…' : 'Rodar eleição completa'}
       </button>
       <p className="muted small">
-        Shortcut: runs the ceremony, opens polls, casts random ballots on every machine, closes, tallies and
-        signs. Each step is still on the board.
+        Atalho: faz a cerimônia, abre a votação, registra votos aleatórios em todas as urnas, encerra, apura e
+        assina. Cada etapa continua no mural público.
       </p>
     </div>
   );
@@ -130,26 +128,28 @@ function RunWholeElection() {
 
 // -- polls ----------------------------------------------------------------------
 
+const OPEN_POLLS = 'Abrindo a votação…';
+
 function PollsPanel() {
   const { busy, run } = useSim();
   return (
     <Panel
-      step="Polls"
-      title="Open polls"
-      who="the EA (election authority). It posts the signed registry and the polls_open record."
+      step="2 · Abertura"
+      title="Abrir votação"
+      who="a Justiça Eleitoral (EA). Ela publica o cadastro assinado e o registro de abertura."
     >
       <button
         type="button"
         className="btn btn-primary"
         disabled={busy !== null}
         onClick={() =>
-          run('Opening polls…', (sim) => {
+          run(OPEN_POLLS, (sim) => {
             sim.open_polls();
             return true;
           })
         }
       >
-        {busy === 'Opening polls…' ? 'Working…' : 'Open polls'}
+        {busy === OPEN_POLLS ? 'Trabalhando…' : 'Abrir votação'}
       </button>
     </Panel>
   );
@@ -164,13 +164,13 @@ function VotingPanel() {
   const section = election.sections.find((s) => s.id === sectionId) ?? election.sections[0];
   return (
     <Panel
-      step="Voting"
-      title="Sessions and voters"
-      who="the mesário (poll worker) opens a session and authorizes each voter. The voter uses the urna in the workbench."
+      step="3 · Votação"
+      title="Seções e eleitores"
+      who="o mesário abre a seção e identifica cada eleitor. O eleitor vota na urna da aba Urna."
     >
       {election.sections.length > 0 && (
         <label className="field">
-          <span>Section</span>
+          <span>Seção</span>
           <select value={section?.id ?? ''} onChange={(e) => setSectionId(e.target.value)}>
             {election.sections.map((s) => (
               <option key={s.id} value={s.id}>
@@ -181,7 +181,7 @@ function VotingPanel() {
         </label>
       )}
       {section && (
-        <ul className="machines" aria-label={`Machines of section ${section.id}`}>
+        <ul className="machines" aria-label={`Urnas da seção ${section.id}`}>
           {section.machines.map((m) => (
             <MachineCard key={m} id={m} />
           ))}
@@ -189,7 +189,7 @@ function VotingPanel() {
       )}
       {election.reserveMachines.length > 0 && (
         <>
-          <h4 className="subhead">Reserve machines</h4>
+          <h4 className="subhead">Urnas de reserva</h4>
           <ul className="machines">
             {election.reserveMachines.map((m) => (
               <MachineCard key={m} id={m} reserve election={election} />
@@ -201,21 +201,25 @@ function VotingPanel() {
   );
 }
 
+const CLOSE_POLLS = 'Encerrando a votação…';
+
 function ClosePanel() {
   const { busy, run, update } = useSim();
   return (
     <div className="panel">
-      <div className="panel-step">Close</div>
-      <h3 className="panel-title">Close polls</h3>
+      <div className="panel-step">4 · Encerramento</div>
+      <h3 className="panel-title">Encerrar votação</h3>
       <p className="muted small">
-        <strong>Who acts:</strong> the EA. Any session still open is closed first, then tally_cutoff is posted. A section whose machine never opened has no package, and the verifier lists it as missing (step 7).
+        <strong>Quem age:</strong> a Justiça Eleitoral (EA). Antes, as seções abertas são encerradas, e o corte da
+        votação é publicado. Uma seção cuja urna nunca abriu não tem pacote, e o verificador a lista como ausente
+        (passo 7).
       </p>
       <button
         type="button"
         className="btn"
         disabled={busy !== null}
         onClick={async () => {
-          const ok = await run('Closing polls…', (sim) => {
+          const ok = await run(CLOSE_POLLS, (sim) => {
             sim.cutoff();
             return true;
           });
@@ -231,13 +235,15 @@ function ClosePanel() {
             }));
         }}
       >
-        {busy === 'Closing polls…' ? 'Working…' : 'Close polls'}
+        {busy === CLOSE_POLLS ? 'Trabalhando…' : 'Encerrar votação'}
       </button>
     </div>
   );
 }
 
-/** One machine: its session state, and the poll worker's buttons. */
+const SECTION_PICK = 'Escolha uma seção';
+
+/** One machine: its session state, and the mesário's buttons. */
 function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean; election?: ElectionDto }) {
   const { ui, busy, run, patchSession, addStrip } = useSim();
   const s: MachineUi = ui.sessions[id] ?? blankSession();
@@ -246,16 +252,20 @@ function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean;
 
   const status = !s.open
     ? s.closed
-      ? 'closed'
-      : 'not opened'
+      ? 'encerrada'
+      : 'não aberta'
     : s.pending
-      ? 'ballot in progress'
+      ? 'cédula em andamento'
       : s.authorized
-        ? 'voter authorized'
-        : 'open, waiting for a voter';
+        ? 'eleitor liberado'
+        : 'aberta, aguardando eleitor';
 
   const idle = busy === null;
   const sectionForOpen = reserve ? pick : null;
+  const openLabel = `Abrindo ${id}…`;
+  const authLabel = `Liberando ${id}…`;
+  const castLabel = `Simulando votos em ${id}…`;
+  const closeLabel = `Encerrando ${id}…`;
 
   return (
     <li className="machine">
@@ -264,16 +274,16 @@ function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean;
         <span className={`badge badge-${s.open ? 'open' : s.closed ? 'closed' : 'idle'}`}>{status}</span>
       </div>
       <div className="counters muted small">
-        cast {s.cast} · spoiled {s.spoiled} · abandoned {s.abandoned}
+        depositados {s.cast} · auditados {s.spoiled} · abandonados {s.abandoned}
       </div>
       <div className="machine-actions">
         {!s.open && (
           <>
             {reserve && (
               <label className="field inline">
-                <span>Stands in for</span>
+                <span>Substitui a seção</span>
                 <select value={pick} onChange={(e) => setPick(e.target.value)}>
-                  <option value="">Pick a section</option>
+                  <option value="">{SECTION_PICK}</option>
                   {sections.map((x) => (
                     <option key={x} value={x}>
                       {x}
@@ -287,13 +297,13 @@ function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean;
               className="btn"
               disabled={!idle || (reserve && !pick)}
               onClick={async () => {
-                const z = await run(`Opening ${id}…`, (sim) => sim.open_session(id, sectionForOpen));
+                const z = await run(openLabel, (sim) => sim.open_session(id, sectionForOpen));
                 if (!z) return;
                 addStrip({ kind: 'zeresima', zeresima: z as ZeresimaDto });
                 patchSession(id, () => ({ ...blankSession(), open: true }));
               }}
             >
-              {busy === `Opening ${id}…` ? 'Working…' : 'Open session'}
+              {busy === openLabel ? 'Trabalhando…' : 'Abrir seção (zerésima)'}
             </button>
           </>
         )}
@@ -304,52 +314,52 @@ function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean;
               className="btn"
               disabled={!idle || s.authorized || s.pending}
               onClick={async () => {
-                const seq = await run(`Authorizing on ${id}…`, (sim) => sim.authorize(id));
+                const seq = await run(authLabel, (sim) => sim.authorize(id));
                 if (seq !== undefined) patchSession(id, () => ({ authorized: true }));
               }}
             >
-              {busy === `Authorizing on ${id}…` ? 'Working…' : 'Authorize voter'}
+              {busy === authLabel ? 'Trabalhando…' : 'Identificar eleitor e liberar a urna'}
             </button>
             <button
               type="button"
               className="btn"
               disabled={!idle || s.authorized || s.pending}
               onClick={async () => {
-                const ok = await run(`Casting on ${id}…`, (sim) => {
+                const ok = await run(castLabel, (sim) => {
                   sim.cast_random(id, 5);
                   return true;
                 });
                 if (ok) patchSession(id, (m) => ({ cast: m.cast + 5, authorized: false }));
               }}
             >
-              {busy === `Casting on ${id}…` ? 'Working…' : 'Cast 5 random ballots'}
+              {busy === castLabel ? 'Trabalhando…' : 'Simular 5 votos aleatórios'}
             </button>
             <button
               type="button"
               className="btn"
               disabled={!idle || !s.pending}
               onClick={async () => {
-                const ok = await run(`Abandoning on ${id}…`, (sim) => {
+                const ok = await run(`Abandonando em ${id}…`, (sim) => {
                   sim.abandon(id);
                   return true;
                 });
                 if (ok) patchSession(id, (m) => ({ pending: false, abandoned: m.abandoned + 1 }));
               }}
             >
-              Abandon ballot
+              Abandonar cédula
             </button>
             <button
               type="button"
               className="btn"
               disabled={!idle || s.pending}
               onClick={async () => {
-                const pre = await run(`Closing ${id}…`, (sim) => sim.close_session(id));
+                const pre = await run(closeLabel, (sim) => sim.close_session(id));
                 if (!pre) return;
                 addStrip({ kind: 'prebu', prebu: pre as PreBuDto });
                 patchSession(id, () => ({ open: false, closed: true, authorized: false, pending: false }));
               }}
             >
-              {busy === `Closing ${id}…` ? 'Working…' : 'Close session'}
+              {busy === closeLabel ? 'Trabalhando…' : 'Encerrar seção'}
             </button>
           </>
         )}
@@ -360,78 +370,81 @@ function MachineCard({ id, reserve, election }: { id: string; reserve?: boolean;
 
 // -- tally, verify --------------------------------------------------------------
 
+const TALLY = 'Apurando…';
+const SIGN = 'Assinando…';
+
 function TallyPanel() {
-  const { busy, run, update, addStrip } = useSim();
+  const { busy, run, update } = useSim();
   return (
     <Panel
-      step="Tally"
-      title="Run tally"
-      who="the trustees decrypt the homomorphic totals and the mixnet runs; the EA signs the result."
+      step="5 · Apuração"
+      title="Apurar votos"
+      who="os guardiões da chave decifram os totais e as misturas são feitas; a EA assina o resultado."
     >
       <button
         type="button"
         className="btn btn-primary"
         disabled={busy !== null}
         onClick={async () => {
-          const r = await run('Tallying…', (sim) => sim.tally());
+          const r = await run(TALLY, (sim) => sim.tally());
           if (!r) return;
-          const view = r as ResultDto;
-          update((u) => ({ ...u, result: view }));
-          addStrip({ kind: 'result', result: view });
+          const view = toResult(r);
+          update((u) => printStrips({ ...u, result: view }, tallyStrips(view)));
           // The board signs a tree head over the published tally, so the
           // verifier has a signed root to check the dump against (§17.3).
-          const heads = await run('Signing…', (sim) => sim.sign_sth());
+          const heads = await run(SIGN, (sim) => sim.sign_sth());
           if (!heads) return;
           const list = heads as SthDto[];
-          update((u) => ({ ...u, sths: [...u.sths, ...list] }));
-          for (const h of list) addStrip({ kind: 'sth', sth: h });
+          update((u) => printStrips({ ...u, sths: [...u.sths, ...list] }, list.map((h) => ({ kind: 'sth', sth: h }))));
         }}
       >
-        {busy === 'Tallying…' ? 'Working…' : 'Run tally'}
+        {busy === TALLY ? 'Trabalhando…' : 'Apurar votos'}
       </button>
     </Panel>
   );
 }
 
+const SIGN_HEAD = 'Assinando a cabeça…';
+const VERIFY = 'Rodando o verificador…';
+
 function VerifyPanel() {
-  const { busy, run, update, addStrip } = useSim();
+  const { busy, run, update } = useSim();
   return (
     <>
       <Panel
-        step="Tally"
-        title="Sign tree head"
-        who="the board. It signs the size and root of the log, so anyone can check later that nothing was added or removed."
+        step="5 · Apuração"
+        title="Assinar raiz do mural"
+        who="o mural público. Ele assina o tamanho e a raiz do registro, para que qualquer um confira depois que nada foi acrescentado ou retirado."
       >
         <button
           type="button"
           className="btn"
           disabled={busy !== null}
           onClick={async () => {
-            const heads = await run('Signing…', (sim) => sim.sign_sth());
+            const heads = await run(SIGN_HEAD, (sim) => sim.sign_sth());
             if (!heads) return;
             const list = heads as SthDto[];
-            update((u) => ({ ...u, sths: [...u.sths, ...list] }));
-            for (const h of list) addStrip({ kind: 'sth', sth: h });
+            update((u) => printStrips({ ...u, sths: [...u.sths, ...list] }, list.map((h) => ({ kind: 'sth', sth: h }))));
           }}
         >
-          {busy === 'Signing…' ? 'Working…' : 'Sign tree head'}
+          {busy === SIGN_HEAD ? 'Trabalhando…' : 'Assinar raiz do mural'}
         </button>
       </Panel>
       <Panel
-        step="Verify"
-        title="Run verifier"
-        who="anyone, from the public board alone. The 16 steps of §23 run in the workbench, with no keys."
+        step="6 · Verificação"
+        title="Rodar verificador"
+        who="qualquer pessoa, só com o mural público. Os 16 passos do §23 rodam na aba Verificação, sem chaves."
       >
         <button
           type="button"
           className="btn btn-primary"
           disabled={busy !== null}
           onClick={async () => {
-            const rep = await run('Verifying…', (sim) => sim.verify());
+            const rep = await run(VERIFY, (sim) => sim.verify());
             if (rep) update((u) => ({ ...u, report: rep as ReportDto }));
           }}
         >
-          {busy === 'Verifying…' ? 'Working…' : 'Run verifier'}
+          {busy === VERIFY ? 'Trabalhando…' : 'Rodar verificador'}
         </button>
       </Panel>
     </>
@@ -443,39 +456,39 @@ function VerifyPanel() {
 const ATTACKS: { key: keyof AttacksDto; label: string; does: string; caught: string }[] = [
   {
     key: 'machineFlipsVotes',
-    label: 'Machine flips votes',
-    does: "The machine encrypts a different choice for the first contest than the voter made. Its spoil receipt claims the voter's choice.",
-    caught: 'a spoil audit (§14.2): "Check this receipt independently" re-encrypts the claim.',
+    label: 'Urna troca votos',
+    does: 'A urna cifra uma escolha diferente da feita pelo eleitor no primeiro cargo. O recibo de auditoria afirma a escolha do eleitor.',
+    caught: 'uma auditoria de cédula (§14.2): "Conferir este recibo de forma independente" recifra a afirmação.',
   },
   {
     key: 'boardDropsPackageOf',
-    label: "Board drops a machine's package",
-    does: "The board never stores that machine's closed-session package. The section attestation is still posted.",
-    caught: 'Packages and Completeness (steps 6 and 7).',
+    label: 'Mural perde o pacote de uma urna',
+    does: 'O mural nunca guarda o pacote de sessão encerrada daquela urna. A atestação da seção continua publicada.',
+    caught: 'Pacotes e Completude (passos 6 e 7).',
   },
   {
     key: 'trusteeLies',
-    label: 'Trustee lies in decryption',
-    does: 'One trustee signs corrupted decryption shares.',
-    caught: 'Decryption (step 11): the bad shares are rejected and the tally still completes.',
+    label: 'Guardião mente na decifragem',
+    does: 'Um guardião assina frações de decifragem corrompidas.',
+    caught: 'Decriptação (passo 11): as frações ruins são rejeitadas e a apuração ainda termina.',
   },
   {
     key: 'eaAltersResult',
-    label: 'EA alters the result',
-    does: 'The EA adds 100 votes to the first option of the first contest before signing the result.',
-    caught: 'Counts (step 13) and Result (step 15): the published result differs from the recount.',
+    label: 'EA altera o resultado',
+    does: 'A EA soma 100 votos à primeira opção do primeiro cargo antes de assinar o resultado.',
+    caught: 'Contagem (passo 13) e Resultado (passo 15): o resultado publicado difere da recontagem.',
   },
   {
     key: 'boardEquivocates',
-    label: 'Board equivocates',
-    does: 'After the first tree head, the board signs a second head of the same size over an altered log.',
-    caught: 'Board (step 1): two signed heads of one size disagree.',
+    label: 'Mural emite duas cabeças',
+    does: 'Depois da primeira cabeça, o mural assina uma segunda, do mesmo tamanho, sobre um registro alterado.',
+    caught: 'Mural (passo 1): duas cabeças assinadas de um mesmo tamanho divergem.',
   },
   {
     key: 'badDkgShare',
-    label: 'Bad DKG share',
-    does: 'One trustee sends another a share that does not match its commitments.',
-    caught: 'Key ceremony (step 3): the receiver complains and the sender reveals the correct share.',
+    label: 'Fração ruim na cerimônia',
+    does: 'Um guardião envia a outro uma fração que não bate com os compromissos.',
+    caught: 'Cerimônia de chaves (passo 3): quem recebe reclama, e quem enviou revela a fração correta.',
   },
 ];
 
@@ -485,7 +498,7 @@ function Sabotage() {
   const phase = snap.phase;
 
   async function setAttack(patch: Partial<AttacksDto>) {
-    await run('Setting attacks…', (sim) => {
+    await run('Aplicando sabotagem…', (sim) => {
       sim.set_attacks({ ...a, ...patch });
       return true;
     });
@@ -493,9 +506,9 @@ function Sabotage() {
 
   return (
     <details className="sabotage">
-      <summary>Sabotage</summary>
+      <summary>Sabotagem</summary>
       <p className="muted small">
-        Deliberate misbehaviour, switched on before the step it affects. Each one says what should catch it.
+        Mau comportamento deliberado, ligado antes da etapa que ele afeta. Cada um diz o que deveria detectá-lo.
       </p>
       {ATTACKS.map((t) => {
         const open = attackOpen(t.key, phase);
@@ -506,12 +519,12 @@ function Sabotage() {
               <span className="attack-label">{t.label}</span>
               {t.key === 'boardDropsPackageOf' ? (
                 <select
-                  aria-label="Machine whose package is dropped"
+                  aria-label="Urna cujo pacote é descartado"
                   value={a.boardDropsPackageOf ?? ''}
                   disabled={!open || busy !== null}
                   onChange={(e) => setAttack({ boardDropsPackageOf: e.target.value || null })}
                 >
-                  <option value="">Off</option>
+                  <option value="">Desligado</option>
                   {allMachines(snap.election).map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.id}
@@ -527,15 +540,17 @@ function Sabotage() {
                   disabled={!open || busy !== null}
                   onClick={() => setAttack({ [t.key]: !on } as Partial<AttacksDto>)}
                 >
-                  {on ? 'On' : 'Off'}
+                  {on ? 'Ligado' : 'Desligado'}
                 </button>
               )}
             </div>
-            <p className="small">{t.does}</p>
-            <p className="small muted">
-              <strong>Caught by:</strong> {t.caught}
+            <p className="small">
+              <strong>O que faz:</strong> {t.does}
             </p>
-            {!open && <p className="small muted">Locked: this step has already passed.</p>}
+            <p className="small muted">
+              <strong>Quem detecta:</strong> {t.caught}
+            </p>
+            {!open && <p className="small muted">Bloqueado: esta etapa já passou.</p>}
           </div>
         );
       })}
@@ -553,7 +568,7 @@ function NewElection() {
   return (
     <div className="new-election">
       <label className="field">
-        <span>Scenario</span>
+        <span>Cenário</span>
         <select value={scenario} onChange={(e) => setScenario(e.target.value)} disabled={busy !== null}>
           {scenarios.map((s) => (
             <option key={s.id} value={s.id}>
@@ -576,7 +591,7 @@ function NewElection() {
         }}
         onBlur={() => setConfirming(false)}
       >
-        {confirming ? 'New election → Click again to discard the current one' : 'New election'}
+        {confirming ? 'Nova eleição → clique de novo para descartar a atual' : 'Nova eleição'}
       </button>
     </div>
   );

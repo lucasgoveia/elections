@@ -1,6 +1,8 @@
 /** Groups a hex string in fours, separated by spaces, as printed on a BU. */
 export function groupHex(hex: string): string {
-  return hex.match(/.{1,4}/g)?.join(' ') ?? hex;
+  // Some values arrive already grouped ("ABCD-EF01-…"); regroup the bare digits.
+  const bare = hex.replace(/[^0-9a-fA-F]/g, '');
+  return bare.match(/.{1,4}/g)?.join(' ') ?? hex;
 }
 
 /** The first and last characters of a hash, for compact display. */

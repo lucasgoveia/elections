@@ -4,7 +4,7 @@ import { SimProvider } from './sim';
 import { App } from './App';
 import './styles.css';
 
-// The page shows "Loading cryptography…" (index.html) until the wasm is ready.
+// A página mostra "Carregando criptografia…" (index.html) até o wasm ficar pronto.
 const root = createRoot(document.getElementById('root')!);
 
 // The single-file build (for hosting as one HTML page) embeds the wasm as a
@@ -29,8 +29,8 @@ wasmSource().then(init).then(
     const msg = e instanceof Error ? e.message : String(e);
     root.render(
       <p className="boot-loading" role="alert">
-        The cryptography did not load: {msg}. Reload the page. If it fails again, the wasm build in
-        src/wasm may be missing.
+        A criptografia não carregou: {msg}. Recarregue a página. Se falhar de novo, o build do wasm em
+        src/wasm pode estar faltando.
       </p>,
     );
   },

@@ -7,14 +7,14 @@ export function Printer() {
   return (
     <section className="printer" aria-labelledby="printer-title">
       <h2 id="printer-title" className="col-title">
-        Printer
+        Impressora
       </h2>
       <div className="slot" aria-hidden="true" />
-      <div className="strips" role="log" aria-live="polite" aria-label="Printed strips, newest first">
+      <div className="strips" role="log" aria-live="polite" aria-label="Fitas impressas, da mais nova para a mais antiga">
         {ui.strips.length === 0 ? (
           <p className="muted idle">
-            The printer is idle. Strips come out here as the polling day runs: zerésima, comprovante,
-            boletim de urna, the signed result.
+            A impressora está parada. As fitas saem aqui conforme a votação acontece: zerésima, comprovante,
+            pré-boletim, boletim de urna e o resultado assinado.
           </p>
         ) : (
           ui.strips.map((s) => <Strip key={s.id} data={s.data} election={snap.election} />)

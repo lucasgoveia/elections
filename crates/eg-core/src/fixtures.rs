@@ -702,7 +702,7 @@ pub fn starwars_registry(manifest: &Manifest, keys: &Keys) -> Registry {
         .enumerate()
         .map(|(i, (planet, _))| SectionEntry {
             section_id: (*planet).to_owned(),
-            eligible: 120,
+            eligible: 30,
             poll_worker_keys: keys.poll_workers[2 * i..2 * i + 2]
                 .iter()
                 .map(SigningKey::verifying_key)

@@ -109,7 +109,7 @@ impl Scenario {
     fn random_ballots_per_machine(self) -> usize {
         match self {
             Scenario::Pilot => 3,
-            Scenario::StarWars => 2,
+            Scenario::StarWars => 22,
         }
     }
 }
@@ -1902,8 +1902,8 @@ mod tests {
         // Every section's counted ballots match its cast ballots, and its
         // eligible voters come from the registry.
         for s in &view.sections {
-            assert_eq!(s.eligible, 120);
-            assert_eq!(s.cast, 3);
+            assert_eq!(s.eligible, 30);
+            assert_eq!(s.cast, 23);
             assert_eq!(s.contests.len(), 3, "{}", s.section_id);
             assert!(s.pre_bu_fingerprint.contains('-'));
         }

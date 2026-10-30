@@ -1,34 +1,35 @@
 import type { FindingDto, ReportDto } from '../types';
 import { groupHex } from '../format';
 
-/** Titles of the 16 steps of §23, in order. */
+/** Titles of the 16 steps of §23, in order, in pt-BR. */
 const STEP_NAMES = [
-  'Board',
-  'Manifest',
-  'Key ceremony',
-  'Context',
-  'Registry & freeze',
-  'Packages',
-  'Completeness',
-  'Spoiled ballots',
-  'Homomorphic tally',
+  'Mural',
+  'Manifesto',
+  'Cerimônia de chaves',
+  'Contexto',
+  'Registro e congelamento',
+  'Pacotes',
+  'Completude',
+  'Cédulas auditadas',
+  'Apuração homomórfica',
   'Mixnet',
-  'Decryption',
-  'Final BUs',
-  'Counts',
-  'Apportionment',
-  'Result',
-  'Independence',
+  'Decriptação',
+  'BUs finais',
+  'Contagem',
+  'Distribuição de cadeiras',
+  'Resultado',
+  'Independência',
 ];
 
+/** A finding: where it is, then the message as the Rust verifier wrote it (English), labelled as technical detail. */
 function FindingLine({ f, kind }: { f: FindingDto; kind: 'fail' | 'warn' }) {
-  const where = [f.entry !== null ? `entry ${f.entry}` : null, f.section ? `section ${f.section}` : null]
+  const where = [f.entry !== null ? `entrada ${f.entry}` : null, f.section ? `seção ${f.section}` : null]
     .filter(Boolean)
     .join(', ');
   return (
     <p className={kind === 'fail' ? 'step-msg step-fail' : 'step-msg step-warn'}>
       {where && <span className="mono">{where}: </span>}
-      {f.message}
+      <span className="tech-label">detalhe técnico</span> {f.message}
     </p>
   );
 }
@@ -41,12 +42,12 @@ export function AuditSheet({ report }: { report: ReportDto }) {
   const ind = report.independence;
 
   return (
-    <article className="sheet" aria-label="Verifier audit sheet">
+    <article className="sheet" aria-label="Folha de verificação">
       <header className="sheet-head">
         <div className="sheet-title">VERIFICAÇÃO · §23</div>
-        <div className="sheet-sub">16 steps, run from the public board alone</div>
+        <div className="sheet-sub">16 passos, rodados só com o mural público</div>
         <div className={report.passed ? 'sheet-verdict pass' : 'sheet-verdict fail'}>
-          {report.passed ? 'All checks passed' : 'Checks failed'}
+          {report.passed ? 'Todas as verificações passaram' : 'Verificações falharam'}
         </div>
       </header>
 
@@ -61,11 +62,11 @@ export function AuditSheet({ report }: { report: ReportDto }) {
                 <span className="step-num mono">{n}</span>
                 <span className="step-name">{name}</span>
                 {fails.length > 0 ? (
-                  <span className="stamp" aria-label="failed">
-                    FAILED
+                  <span className="stamp" aria-label="falhou">
+                    FALHOU
                   </span>
                 ) : (
-                  <span className="tick" aria-label="passed">
+                  <span className="tick" aria-label="passou">
                     ✓
                   </span>
                 )}
@@ -83,7 +84,7 @@ export function AuditSheet({ report }: { report: ReportDto }) {
 
       {(stray.length > 0 || strayWarn.length > 0) && (
         <section className="sheet-block">
-          <h4>Other findings</h4>
+          <h4>Outros achados</h4>
           {stray.map((f, j) => (
             <FindingLine key={`s${j}`} f={f} kind="fail" />
           ))}
@@ -95,7 +96,7 @@ export function AuditSheet({ report }: { report: ReportDto }) {
 
       {report.excluded.length > 0 && (
         <section className="sheet-block">
-          <h4>Excluded ballots ({report.excluded.length})</h4>
+          <h4>Cédulas excluídas ({report.excluded.length})</h4>
           {report.excluded.map((f, j) => (
             <FindingLine key={`x${j}`} f={f} kind="warn" />
           ))}
@@ -104,7 +105,7 @@ export function AuditSheet({ report }: { report: ReportDto }) {
 
       {report.result && (
         <section className="sheet-block">
-          <h4>Verified result</h4>
+          <h4>Resultado verificado</h4>
           {report.result.contests.map((c) => (
             <div key={c.index} className="sheet-result">
               <div className="label">{c.name}</div>
@@ -115,7 +116,7 @@ export function AuditSheet({ report }: { report: ReportDto }) {
                 </div>
               ))}
               <div className="muted small">
-                counted {c.counted} · invalid {c.invalid} · excluded {c.excluded}
+                contadas {c.counted} · inválidas {c.invalid} · excluídas {c.excluded}
               </div>
             </div>
           ))}
@@ -123,44 +124,44 @@ export function AuditSheet({ report }: { report: ReportDto }) {
       )}
 
       <section className="sheet-block">
-        <h4>Independence</h4>
+        <h4>Independência</h4>
         {report.contextHash && (
           <p className="small">
-            Context <span className="mono">{groupHex(report.contextHash)}</span>
+            Contexto <span className="mono">{groupHex(report.contextHash)}</span>
           </p>
         )}
-        <PartyList title="Trustees" items={ind.trustees} />
-        <PartyList title="Release signers" items={ind.releaseSigners} />
-        <PartyList title="Mirrors" items={ind.mirrors} />
-        <div className="label">Rules 11 to 13</div>
+        <PartyList title="Guardiões da chave" items={ind.trustees} />
+        <PartyList title="Assinantes da liberação" items={ind.releaseSigners} />
+        <PartyList title="Espelhos" items={ind.mirrors} />
+        <div className="label">Regras 11 a 13</div>
         <ul className="rules">
           {ind.rules.map((r) => (
             <li key={r.rule} className={r.ok ? 'check-ok' : 'check-fail'}>
-              Rule {r.rule} {r.ok ? '✓ ok' : '✗ fails'}
+              Regra {r.rule} {r.ok ? '✓ ok' : '✗ falha'}
             </li>
           ))}
         </ul>
         {ind.partyKeys.length > 0 && (
           <>
-            <div className="label">Party keys</div>
+            <div className="label">Chaves dos partidos</div>
             <ul className="small">
               {ind.partyKeys.map((k) => (
                 <li key={k.party}>
-                  {k.party}: {k.fingerprint ? <span className="mono">{k.fingerprint}</span> : 'no key'}
+                  {k.party}: {k.fingerprint ? <span className="mono">{k.fingerprint}</span> : 'sem chave'}
                 </li>
               ))}
             </ul>
           </>
         )}
-        <div className="label">Sections without observer signatures</div>
+        <div className="label">Seções sem assinatura de fiscal</div>
         <p className="small">
           {ind.sectionsWithoutObserver.length === 0
-            ? 'None. Every section has an observer signature.'
+            ? 'Nenhuma. Toda seção tem assinatura de fiscal.'
             : ind.sectionsWithoutObserver.join(', ')}
         </p>
         {ind.partiesWithoutObserver.length > 0 && (
           <>
-            <div className="label">Parties without observer signatures</div>
+            <div className="label">Partidos sem assinatura de fiscal</div>
             <p className="small">{ind.partiesWithoutObserver.join(', ')}</p>
           </>
         )}

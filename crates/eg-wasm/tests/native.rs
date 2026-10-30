@@ -334,7 +334,7 @@ fn starwars_election_dto_has_twenty_one_contests_and_ten_sections() {
         assert_eq!(s.machine_contests.len(), 1);
         assert_eq!(s.machine_contests[0].id, s.machines[0]);
         assert_eq!(s.machine_contests[0].contests.len(), 3);
-        assert_eq!(s.eligible, 120);
+        assert_eq!(s.eligible, 30);
     }
 }
 
@@ -404,15 +404,15 @@ fn starwars_result_sections_carry_final_bu_data() {
     assert_eq!(result.sections.len(), 10);
     for s in &result.sections {
         assert!(s.matches, "{}", s.section_id);
-        assert_eq!(s.eligible, 120);
-        assert_eq!(s.cast, 3);
-        assert_eq!(s.abstentions, 117);
+        assert_eq!(s.eligible, 30);
+        assert_eq!(s.cast, 23);
+        assert_eq!(s.abstentions, 7);
         assert_eq!(s.contests.len(), 3);
         assert_eq!(s.pre_bu_fingerprint.matches('-').count(), 15);
         let president = &s.contests[0];
         assert_eq!(president.index, 0);
-        assert_eq!(president.counted, 3);
+        assert_eq!(president.counted, 23);
         assert_eq!(president.votes.len(), 7);
-        assert_eq!(president.votes.iter().sum::<u64>(), 3);
+        assert_eq!(president.votes.iter().sum::<u64>(), 23);
     }
 }
