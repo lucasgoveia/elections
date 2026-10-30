@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "wasm": "cd .. && wasm-pack build crates/eg-wasm --target web --out-dir ../../web/src/wasm --release && rm -f web/src/wasm/.gitignore",
-    "build:single": "tsc -b && vite build --mode single"
+    "build:single": "tsc -b && vite build --mode single",
+    "deploy": "bun run build && bunx wrangler@3.99.0 pages deploy dist --project-name urna-a-prova --branch main"
   },
   "dependencies": {
     "qrcode-generator": "1.4.4",
