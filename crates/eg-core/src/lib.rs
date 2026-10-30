@@ -1,5 +1,6 @@
 //! eg/v1 core primitives (SPEC.md §5, §6, §10, §11).
 
+pub mod board;
 pub mod cbor;
 pub mod ceremony;
 pub mod dkg;

@@ -25,4 +25,6 @@ pub enum Error {
     Ceremony(String),
     #[error("manifest: {0}")]
     Manifest(String),
+    #[error("board: {0}")]
+    Board(String),
 }
