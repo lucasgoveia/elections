@@ -69,6 +69,9 @@ function SiteBar() {
               Tente você mesmo
             </a>
           </li>
+          <li>
+            <a href="https://github.com/lucasgoveia/elections">Código</a>
+          </li>
         </ul>
       </nav>
       <p className="sitebar-aviso">
